@@ -1,5 +1,5 @@
 {
-  "pluginAlias": "ExampleHomebridgePlugin",
+  "pluginAlias": "Hubspace",
   "pluginType": "platform",
   "singular": true,
   "schema": {
@@ -10,6 +10,20 @@
         "type": "string",
         "required": true,
         "default": "Example Dynamic Platform"
+      },
+      "username": {
+        "title": "Username",
+        "type": "string",
+        "required": true,
+        "description": "Your Hubspace username",
+        "placeholder": "Username"
+      },
+      "password": {
+        "title": "Password",
+        "type": "string",
+        "required": true,
+        "description": "Your Hubspace password",
+        "placeholder": "Password"
       }
     }
   }
