@@ -36,11 +36,6 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
         this.api.on('didFinishLaunching', async () => {
             log.debug('Executed didFinishLaunching callback');
             await AccountService.instance.loadAccount();
-            const token = await TokenService.instance.getToken();
-
-            this.log.info(token || 'No token loaded');
-            this.log.info(AccountService.instance.accountId);
-
             // run the method to discover / register your devices as accessories
             this.discoverDevices();
         });

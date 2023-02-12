@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { TokenResponse } from '../responses/token-response';
-import { Endpoints } from '../endpoints';
+import { Endpoints } from '../api/endpoints';
 
 /**
  * Service for managing JWT tokens

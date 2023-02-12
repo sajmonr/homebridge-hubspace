@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { addBearerToken } from '../api/interceptors';
-import { Endpoints } from '../endpoints';
+import { Endpoints } from '../api/endpoints';
 import { AccountResponse } from '../responses/account-response';
 
 export class AccountService{
