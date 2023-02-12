@@ -1,6 +1,9 @@
+import axios from "axios";
 import { PlatformAccessory } from "homebridge";
+import { addBearerToken } from "../api/interceptors";
 import { HubspacePlatform } from "../platform";
 import { ExamplePlatformAccessory } from "../platformAccessory";
+import { DeviceResponse } from "../responses/devices-response";
 import { PLATFORM_NAME, PLUGIN_NAME } from "../settings";
 
 export class DiscoveryService{
@@ -25,8 +28,17 @@ export class DiscoveryService{
    * Accessories must only be registered once, previously created accessories
    * must not be registered again to prevent "duplicate UUID" errors.
    */
-    discoverDevices() {
+    async discoverDevices() {
+        const x = axios.create({
+            headers: {
+                host: 'semantics2.afero.net'
+            }
+        });
 
+        x.interceptors.request.use(addBearerToken);
+
+        const y = await x.get<DeviceResponse[]>('https://api2.afero.net/v1/accounts/d6948a17-ca76-430a-9fee-f1b6d541361b/metadevices');
+        console.log(y.data.filter(d => d.children.length === 0 && d.typeId === 'metadevice.device'));
         // EXAMPLE ONLY
         // A real plugin you would discover accessories from the local network, cloud services
         // or a user-defined array in the platform config.
