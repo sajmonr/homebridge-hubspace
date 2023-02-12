@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { TokenResponse } from '../responses/token-response';
-import { addBearerToken } from '../api/interceptors';
+import { Endpoints } from '../endpoints';
 
 /**
  * Service for managing JWT tokens
@@ -9,7 +9,7 @@ export class TokenService{
     private static _instance: TokenService;
 
     private readonly _httpClient = axios.create({
-        baseURL: 'https://accounts.hubspaceconnect.com/auth/realms/thd',
+        baseURL: Endpoints.ACCOUNT_BASE_URL,
     });
 
     private _accessToken?: string;
@@ -19,9 +19,7 @@ export class TokenService{
 
     private constructor(
         private readonly _username: string,
-        private readonly _password: string) {
-        this._httpClient.interceptors.request.use(addBearerToken);
-    }
+        private readonly _password: string) { }
 
 
     public static get instance(): TokenService{
