@@ -11,6 +11,7 @@ import { DiscoveryService } from './services/discovery.service';
 export class HubspacePlatform implements DynamicPlatformPlugin {
     public readonly Service: typeof Service = this.api.hap.Service;
     public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
+    public readonly accountService: AccountService;
 
     private readonly _discoveryService: DiscoveryService;
 
@@ -22,8 +23,11 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
     public readonly config: PlatformConfig,
     public readonly api: API,
     ) {
+        // Init token service as singleton
         TokenService.init(this.config.username, this.config.password);
+        // Configure global services
         this._discoveryService = new DiscoveryService(this);
+        this.accountService = new AccountService();
 
         this.log.debug('Finished initializing platform:', this.config.name);
 
@@ -44,7 +48,7 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
 
     async onFinishLaunching(): Promise<void>{
         this.log.debug('Executed didFinishLaunching callback');
-        await AccountService.instance.loadAccount();
+        await this.accountService.loadAccount();
         // run the method to discover / register your devices as accessories
         this._discoveryService.discoverDevices();
     }
