@@ -11,6 +11,6 @@ export class Endpoints{
     /**
      * Base URL for API interaction
      */
-    public static readonly API_BASE_URL: string = 'https://api2.afero.net';
+    public static readonly API_BASE_URL: string = 'https://api2.afero.net/v1/';
 
 }
