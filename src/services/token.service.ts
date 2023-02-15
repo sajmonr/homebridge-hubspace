@@ -17,15 +17,28 @@ export class TokenService{
     private _refreshToken?: string;
     private _refreshTokenExpiration?: Date;
 
+    /**
+     * Creates a new instance of token service
+     * @param _username Account username
+     * @param _password Account password
+     */
     private constructor(
         private readonly _username: string,
         private readonly _password: string) { }
 
 
+    /**
+     * {@link TokenService} instance
+     */
     public static get instance(): TokenService{
         return TokenService._instance;
     }
 
+    /**
+     * Initializes {@link TokenService}
+     * @param _username Account username
+     * @param _password Account password
+     */
     public static init(username: string, password: string): void{
         TokenService._instance = new TokenService(username, password);
     }
@@ -48,16 +61,16 @@ export class TokenService{
 
         const tokenResponse = await this.getTokenFromRefreshToken() || await this.getTokenFromCredentials();
 
-        if(!tokenResponse) return false;
+        this.setTokens(tokenResponse);
 
-        this.storeTokens(tokenResponse);
+        if(!tokenResponse) return false;
 
         return true;
     }
 
-    private async getTokenFromRefreshToken(): Promise<TokenResponse | null>{
+    private async getTokenFromRefreshToken(): Promise<TokenResponse | undefined>{
         // If refresh token is expired then don't even try...
-        if(this.isRefreshTokenExpired()) return null;
+        if(this.isRefreshTokenExpired()) return undefined;
 
         const params = new URLSearchParams();
 
@@ -68,13 +81,13 @@ export class TokenService{
         try{
             const response = await this._httpClient.post('/protocol/openid-connect/token', params);
 
-            return response.status === 200 ? response.data : null;
+            return response.status === 200 ? response.data : undefined;
         }catch(exception){
-            return null;
+            return undefined;
         }
     }
 
-    private async getTokenFromCredentials(): Promise<TokenResponse | null>{
+    private async getTokenFromCredentials(): Promise<TokenResponse | undefined>{
         const params = new URLSearchParams();
 
         params.append('grant_type', 'password');
@@ -85,14 +98,23 @@ export class TokenService{
         try{
             const response = await this._httpClient.post('/protocol/openid-connect/token', params);
 
-            return response.status === 200 ? response.data : null;
+            return response.status === 200 ? response.data : undefined;
         }catch(exception){
-            return null;
+            return undefined;
         }
     }
 
 
-    private storeTokens(response: TokenResponse): void{
+    /**
+     * Sets tokens to new values
+     * @param response Response with tokens
+     */
+    private setTokens(response?: TokenResponse): void{
+        if(!response){
+            this.clearTokens();
+            return;
+        }
+
         this._accessToken = response.access_token;
         this._refreshToken = response.refresh_token;
 
@@ -100,6 +122,16 @@ export class TokenService{
 
         this._accessTokenExpiration = new Date(currentDate.getTime() + response.expires_in * 1000);
         this._refreshTokenExpiration = new Date(currentDate.getTime() + response.refresh_expires_in * 1000);
+    }
+
+    /**
+     * Clears stored tokens
+     */
+    private clearTokens(): void{
+        this._accessToken = undefined;
+        this._refreshToken = undefined;
+        this._accessTokenExpiration = undefined;
+        this._refreshTokenExpiration = undefined;
     }
 
     /**
