@@ -2,6 +2,7 @@ import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, Service, Charact
 import { TokenService } from './services/token.service';
 import { AccountService } from './services/account.service';
 import { DiscoveryService } from './services/discovery.service';
+import { DeviceService } from './services/device.service';
 
 /**
  * HomebridgePlatform
@@ -12,30 +13,28 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
     public readonly Service: typeof Service = this.api.hap.Service;
     public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
     public readonly accountService: AccountService;
+    public readonly deviceService: DeviceService;
 
     private readonly _discoveryService: DiscoveryService;
 
-    // this is used to track restored cached accessories
-    public readonly accessories: PlatformAccessory[] = [];
-
     constructor(
-    public readonly log: Logger,
-    public readonly config: PlatformConfig,
-    public readonly api: API,
+        public readonly log: Logger,
+        public readonly config: PlatformConfig,
+        public readonly api: API,
     ) {
         // Init token service as singleton
         TokenService.init(this.config.username, this.config.password);
-        // Configure global services
+        // Configure private services
         this._discoveryService = new DiscoveryService(this);
-        this.accountService = new AccountService();
+        // Configure global services
+        this.accountService = new AccountService(log);
+        this.deviceService = new DeviceService(this);
+
+        // Configure callbacks
+        this.accountService.onAccountLoaded(this._discoveryService.discoverDevices.bind(this._discoveryService));
+        this.api.on('didFinishLaunching', async () => this.accountService.loadAccount());
 
         this.log.debug('Finished initializing platform:', this.config.name);
-
-        // When this event is fired it means Homebridge has restored all cached accessories from disk.
-        // Dynamic Platform plugins should only register new accessories after this event was fired,
-        // in order to ensure they weren't added to homebridge already. This event can also be used
-        // to start discovery of new accessories.
-        this.api.on('didFinishLaunching', this.onFinishLaunching.bind(this));
     }
 
     /**
@@ -44,12 +43,5 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
    */
     configureAccessory(accessory: PlatformAccessory) {
         this._discoveryService.configureCachedAccessory(accessory);
-    }
-
-    async onFinishLaunching(): Promise<void>{
-        this.log.debug('Executed didFinishLaunching callback');
-        await this.accountService.loadAccount();
-        // run the method to discover / register your devices as accessories
-        this._discoveryService.discoverDevices();
     }
 }

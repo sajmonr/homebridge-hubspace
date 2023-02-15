@@ -1,22 +1,21 @@
-import axios from 'axios';
-import { addBearerToken } from '../api/interceptors';
+import { AxiosError } from 'axios';
 import { Endpoints } from '../api/endpoints';
 import { AccountResponse } from '../responses/account-response';
+import { Logger } from 'homebridge';
+import { createHttpClientWithBearerInterceptor } from '../api/http-client-factory';
 
 /**
  * Service for managing account details
  */
 export class AccountService{
-
-    private readonly _client = axios.create({
+    private readonly _client = createHttpClientWithBearerInterceptor({
         baseURL: Endpoints.API_BASE_URL,
     });
 
+    private _onAccountLoaded?: () => Promise<void>;
     private _accountId = '';
 
-    constructor() {
-        this._client.interceptors.request.use(addBearerToken);
-    }
+    constructor(private readonly _log: Logger) { }
 
     /**
      * Gets the account ID
@@ -25,19 +24,25 @@ export class AccountService{
         return this._accountId;
     }
 
+    public onAccountLoaded(callback: () => Promise<void>){
+        this._onAccountLoaded = callback;
+    }
+
     /**
      * Loads current user account
      * @returns True if load succeeded otherwise false
      */
-    public async loadAccount(): Promise<boolean>{
+    public async loadAccount(): Promise<void>{
         try{
-            const response = await this._client.get<AccountResponse>('/v1/users/me');
+            const response = await this._client.get<AccountResponse>('/users/me');
 
             this._accountId = response.data.accountAccess[0].account.accountId;
 
-            return true;
+            if(this._onAccountLoaded){
+                await this._onAccountLoaded();
+            }
         }catch(ex){
-            return false;
+            this._log.error('Failed to load account information.', (<AxiosError>ex).message);
         }
     }
 
