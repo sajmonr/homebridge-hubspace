@@ -21,6 +21,10 @@ export class LightAccessory extends HubspaceAccessory{
         this.service.getCharacteristic(this.platform.Characteristic.On)
             .onGet(this.getOn.bind(this))
             .onSet(this.setOn.bind(this));
+
+        this.service.getCharacteristic(this.platform.Characteristic.Brightness)
+            .onGet(this.getBrightness.bind(this))
+            .onSet(this.setBrightness.bind(this));
     }
 
     private async getOn(): Promise<CharacteristicValue>{
@@ -37,7 +41,24 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async setOn(value: CharacteristicValue): Promise<void>{
-        await this.deviceService.setValue(this.device.deviceId, DeviceAttribute.LightPower, value as boolean);
+        await this.deviceService.setValue(this.device.deviceId, DeviceAttribute.LightPower, value);
+    }
+
+    private async getBrightness(): Promise<CharacteristicValue>{
+        // Try to get the value
+        const value = await this.deviceService.getValue(this.device.deviceId, DeviceAttribute.LightBrightness);
+
+        // If the value is not defined then show 'Not Responding'
+        if(isNullOrUndefined(value)){
+            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        }
+
+        // Otherwise return the value
+        return value!;
+    }
+
+    private async setBrightness(value: CharacteristicValue): Promise<void>{
+        this.deviceService.setValue(this.device.deviceId, DeviceAttribute.LightBrightness, value);
     }
 
 }
