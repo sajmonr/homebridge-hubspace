@@ -55,6 +55,22 @@ export class DiscoveryService{
                 this.registerNewAccessory(device);
             }
         }
+
+        this.clearStaleAccessories(this._cachedAccessories.filter(a => !devices.some(d => d.uuid === a.UUID)))
+    }
+
+    private clearStaleAccessories(staleAccessories: PlatformAccessory[]): void{
+        // Unregister them
+        this._platform.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, staleAccessories)
+
+        // Clear the cache array to reflect this change
+        for(const accessory of staleAccessories){
+            const cacheIndex = this._cachedAccessories.findIndex(a => a.UUID === accessory.UUID);
+
+            if(cacheIndex < 0) continue;
+
+            this._cachedAccessories.splice(cacheIndex, 1);
+        }
     }
 
     private registerCachedAccessory(accessory: PlatformAccessory, device: Device): void{
