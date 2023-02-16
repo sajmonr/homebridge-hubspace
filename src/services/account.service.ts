@@ -12,7 +12,7 @@ export class AccountService{
         baseURL: Endpoints.API_BASE_URL,
     });
 
-    private _onAccountLoaded?: () => Promise<void>;
+    private _onAccountLoaded?: () => void | Promise<void>;
     private _accountId = '';
 
     constructor(private readonly _log: Logger) { }
@@ -39,7 +39,7 @@ export class AccountService{
             this._accountId = response.data.accountAccess[0].account.accountId;
 
             if(this._onAccountLoaded){
-                await this._onAccountLoaded();
+                this._onAccountLoaded();
             }
         }catch(ex){
             this._log.error('Failed to load account information.', (<AxiosError>ex).message);
