@@ -56,7 +56,7 @@ export class DeviceService{
             const response = await this._httpClient.get<DeviceStatusResponse>(`accounts/${this._platform.accountService.accountId}/devices/${deviceId}?expansions=attributes`)
             deviceStatus = response.data;
         }catch(ex){
-            this._platform.log.error('Remote service is not reachable.', (<AxiosError>ex).message)
+            this._platform.log.error('Remote service returned an error.', (<AxiosError>ex).message)
 
             return undefined;
         }
