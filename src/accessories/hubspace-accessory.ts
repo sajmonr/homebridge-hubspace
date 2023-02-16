@@ -37,9 +37,9 @@ export abstract class HubspaceAccessory{
     constructor(
         protected readonly platform: HubspacePlatform,
         protected readonly accessory: PlatformAccessory,
-        service: WithUUID<typeof Service>
+        service: WithUUID<typeof Service> | Service
     ) { 
-        this.service = accessory.getService(service) || this.accessory.addService(this.platform.Service.Lightbulb);
+        this.service = accessory.getService(service as WithUUID<typeof Service>) || this.accessory.addService(service as Service);
 
         this.log = platform.log;
         this.deviceService = platform.deviceService;
