@@ -5,6 +5,7 @@ import { DeviceAttribute } from '../models/device-attributes';
 import { AxiosError, AxiosResponse } from 'axios';
 import { DeviceStatusResponse } from '../responses/device-status-response';
 import { CharacteristicValue } from 'homebridge';
+import { convertNumberToHex } from '../utils';
 
 /**
  * Service for interacting with devices
@@ -108,7 +109,7 @@ export class DeviceService{
         }
 
         if(typeof value === 'number'){
-            return value.toString(16);
+            return convertNumberToHex(value);
         }
 
         throw new Error('The value type is not supported.');
