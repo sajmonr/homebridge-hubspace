@@ -4,6 +4,7 @@ import { createHttpClientWithBearerInterceptor } from '../api/http-client-factor
 import { DeviceAttribute } from '../models/device-attributes';
 import { AxiosError, AxiosResponse } from 'axios';
 import { DeviceStatusResponse } from '../responses/device-status-response';
+import { CharacteristicValue } from 'homebridge';
 
 /**
  * Service for interacting with devices
@@ -23,14 +24,14 @@ export class DeviceService{
      * @param attribute Attribute to set
      * @param value Value to set to attribute
      */
-    async setValue(deviceId: string, attribute: DeviceAttribute, value: boolean): Promise<void>{
+    async setValue(deviceId: string, attribute: DeviceAttribute, value: CharacteristicValue): Promise<void>{
         let response: AxiosResponse;
 
         try{
             response = await this._httpClient.post(`accounts/${this._platform.accountService.accountId}/devices/${deviceId}/actions`, {
                 type: 'attribute_write',
                 attrId: attribute,
-                data: this.getHexValueFromBoolean(value)
+                data: this.getDataValue(value)
             });
         }catch(ex){
             this._platform.log.error('Remote service is not reachable.', (<AxiosError>ex).message);
@@ -43,12 +44,12 @@ export class DeviceService{
     }
 
     /**
-     * Gets a value for attribute as string
+     * Gets a value for attribute
      * @param deviceId ID of a device
      * @param attribute Attribute to get value for
-     * @returns String value
+     * @returns Data value
      */
-    async getValue(deviceId: string, attribute: DeviceAttribute): Promise<string | undefined>{
+    async getValue(deviceId: string, attribute: DeviceAttribute): Promise<CharacteristicValue | undefined>{
         let deviceStatus: DeviceStatusResponse;
 
         try{
@@ -84,8 +85,33 @@ export class DeviceService{
         return value === '1';
     }
 
-    private getHexValueFromBoolean(value: boolean): string{
-        return value ? '01' : '00';
+    /**
+     * Gets a value for attribute as integer
+     * @param deviceId ID of a device
+     * @param attribute Attribute to get value for
+     * @returns Boolean value
+     */
+    async getValueAsInteger(deviceId: string, attribute: DeviceAttribute): Promise<number | undefined>{
+        const value = await this.getValue(deviceId, attribute);
+    
+        if(!value || typeof value !== 'string') return undefined;
+
+        const numberValue = Number.parseInt(value);
+
+        return Number.isNaN(numberValue) ? undefined : numberValue;
+    }
+
+    private getDataValue(value: CharacteristicValue): string{
+
+        if(typeof value === 'boolean'){
+            return value ? '01' : '00';
+        }
+
+        if(typeof value === 'number'){
+            return value.toString(16);
+        }
+
+        throw new Error('The value type is not supported.');
     }
 
 }
