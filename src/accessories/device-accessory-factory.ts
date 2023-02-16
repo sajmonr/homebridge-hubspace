@@ -2,6 +2,7 @@ import { PlatformAccessory } from 'homebridge';
 import { Device } from '../models/device';
 import { DeviceType } from '../models/device-type';
 import { HubspacePlatform } from '../platform';
+import { FanAccessory } from './fan-accessory';
 import { HubspaceAccessory } from './hubspace-accessory';
 import { LightAccessory } from './light-accessory';
 
@@ -17,6 +18,8 @@ export function createAccessoryForDevice(device: Device, platform: HubspacePlatf
     switch(device.type){
         case DeviceType.Light:
             return new LightAccessory(platform, accessory);
+        case DeviceType.Fan:
+            return new FanAccessory(platform, accessory);
         default:
             throw new Error(`Accessory of type '${device.type}' is not supported.`);
     }
