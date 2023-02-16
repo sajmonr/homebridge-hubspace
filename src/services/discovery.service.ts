@@ -29,8 +29,6 @@ export class DiscoveryService{
      * @param accessory Cached accessory
      */
     configureCachedAccessory(accessory: PlatformAccessory): void{
-        this._platform.log.info('Loading accessory from cache:', accessory.displayName);
-
         // add the restored accessory to the accessories cache so we can track if it has already been registered
         this._cachedAccessories.push(accessory);
     }
