@@ -20,7 +20,7 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
     constructor(
         public readonly log: Logger,
         public readonly config: PlatformConfig,
-        public readonly api: API,
+        public readonly api: API
     ) {
         // Init token service as singleton
         TokenService.init(this.config.username, this.config.password);
