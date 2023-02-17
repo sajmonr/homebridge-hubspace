@@ -42,7 +42,10 @@ export class AccountService{
                 this._onAccountLoaded();
             }
         }catch(ex){
-            this._log.error('Failed to load account information.', (<AxiosError>ex).message);
+            const axiosError = <AxiosError>ex;
+            const friendlyMessage = axiosError.response?.status === 401 ? 'Incorrect username or password' : axiosError.message;
+
+            this._log.error('Failed to load account information.', friendlyMessage);
         }
     }
 
