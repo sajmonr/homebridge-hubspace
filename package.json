@@ -1,7 +1,6 @@
 {
-  "private": true,
   "displayName": "Homebridge Hubspace",
-  "name": "homebridge-hubspace",
+  "name": "@sajmonr/homebridge-hubspace",
   "version": "1.0.0",
   "description": "Homebridge plugin for controlling Hubspace accessories.",
   "license": "Apache-2.0",
