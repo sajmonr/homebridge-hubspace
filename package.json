@@ -3,6 +3,8 @@
   "name": "@sajmonr/homebridge-hubspace",
   "version": "1.0.0",
   "description": "Homebridge plugin for controlling Hubspace accessories.",
+  "homepage": "https://github.com/sajmonr/homebridge-hubspace#readme",
+  "author": "Adam Simonicek",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
