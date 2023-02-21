@@ -1,4 +1,6 @@
 
+![npm](https://img.shields.io/npm/v/homebridge-hubspace)
+
 <p align="center">
 
 <img src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" height="150">
