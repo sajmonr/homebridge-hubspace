@@ -1,9 +1,12 @@
-
-![npm](https://img.shields.io/npm/v/homebridge-hubspace)
-
 <p align="center">
 
-<img src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" height="150">
+  <img src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" height="150">
+
+  <br/>
+
+  <a href="https://www.npmjs.com/homebridge-hubspace">
+    <img src="https://img.shields.io/npm/v/homebridge-hubspace.svg?logo=npm&logoColor=fff&label=NPM+package&color=limegreen" alt="Hubspace for Homebridge on npm" />
+  </a>
 
 </p>
 
