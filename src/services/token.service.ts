@@ -9,7 +9,7 @@ export class TokenService{
     private static _instance: TokenService;
 
     private readonly _httpClient = axios.create({
-        baseURL: Endpoints.ACCOUNT_BASE_URL,
+        baseURL: Endpoints.ACCOUNT_BASE_URL
     });
 
     private _accessToken?: string;

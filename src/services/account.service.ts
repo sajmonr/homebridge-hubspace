@@ -9,7 +9,7 @@ import { createHttpClientWithBearerInterceptor } from '../api/http-client-factor
  */
 export class AccountService{
     private readonly _client = createHttpClientWithBearerInterceptor({
-        baseURL: Endpoints.API_BASE_URL,
+        baseURL: Endpoints.API_BASE_URL
     });
 
     private _onAccountLoaded?: () => void | Promise<void>;

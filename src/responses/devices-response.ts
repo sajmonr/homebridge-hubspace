@@ -12,6 +12,6 @@ export interface DeviceResponse{
         device: {
             manufacturerName: string;
             model: string;
-        }
+        };
     };
 }

@@ -8,5 +8,5 @@ export interface DeviceStatusResponse{
         data: string;
         value: string;
         updatedTimestamp: number;
-    }[]
+    }[];
 }

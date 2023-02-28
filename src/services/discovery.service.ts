@@ -56,12 +56,12 @@ export class DiscoveryService{
             }
         }
 
-        this.clearStaleAccessories(this._cachedAccessories.filter(a => !devices.some(d => d.uuid === a.UUID)))
+        this.clearStaleAccessories(this._cachedAccessories.filter(a => !devices.some(d => d.uuid === a.UUID)));
     }
 
     private clearStaleAccessories(staleAccessories: PlatformAccessory[]): void{
         // Unregister them
-        this._platform.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, staleAccessories)
+        this._platform.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, staleAccessories);
 
         // Clear the cache array to reflect this change
         for(const accessory of staleAccessories){
@@ -89,12 +89,13 @@ export class DiscoveryService{
 
     private async getDevicesForAccount(): Promise<Device[]>{
         try{
-            const response = await this._httpClient.get<DeviceResponse[]>(`accounts/${this._platform.accountService.accountId}/metadevices`);
+            const response =
+                await this._httpClient.get<DeviceResponse[]>(`accounts/${this._platform.accountService.accountId}/metadevices`);
             // Get only leaf devices with type of 'device'
             return response.data
-            .filter(d => d.children.length === 0 && d.typeId === 'metadevice.device')
-            .map(this.mapDeviceResponseToModel.bind(this))
-            .filter(d => d !== undefined) as Device[];
+                .filter(d => d.children.length === 0 && d.typeId === 'metadevice.device')
+                .map(this.mapDeviceResponseToModel.bind(this))
+                .filter(d => d !== undefined) as Device[];
         }catch(ex){
             this._platform.log.error('Failed to get devices for account.', (<AxiosError>ex).message);
             return [];

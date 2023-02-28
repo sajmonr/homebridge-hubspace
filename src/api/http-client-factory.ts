@@ -7,7 +7,7 @@ import { addBearerToken } from './interceptors';
  * @param config HTTP client configuration
  * @returns HTTP client with Bearer interceptor
  */
-export function createHttpClientWithBearerInterceptor(config?: CreateAxiosDefaults<any> | undefined): AxiosInstance{
+export function createHttpClientWithBearerInterceptor(config?: CreateAxiosDefaults<unknown> | undefined): AxiosInstance{
     const client = axios.create(config);
 
     client.interceptors.request.use(addBearerToken);

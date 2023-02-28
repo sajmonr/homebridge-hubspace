@@ -15,5 +15,5 @@ export interface Device{
     /** Device manufacturer */
     manufacturer: string;
     /** Device model */
-    model: string[]
+    model: string[];
 }
