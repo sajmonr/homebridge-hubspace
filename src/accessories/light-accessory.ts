@@ -46,10 +46,10 @@ export class LightAccessory extends HubspaceAccessory{
 
     private async getBrightness(): Promise<CharacteristicValue>{
         // Try to get the value
-        const value = await this.deviceService.getValue(this.device.deviceId, DeviceAttribute.LightBrightness);
+        const value = await this.deviceService.getValueAsInteger(this.device.deviceId, DeviceAttribute.LightBrightness);
 
         // If the value is not defined then show 'Not Responding'
-        if(isNullOrUndefined(value)){
+        if(isNullOrUndefined(value) || value === -1){
             throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
 

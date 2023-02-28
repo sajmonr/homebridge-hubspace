@@ -90,11 +90,11 @@ export class DeviceService{
      * Gets a value for attribute as integer
      * @param deviceId ID of a device
      * @param attribute Attribute to get value for
-     * @returns Boolean value
+     * @returns Integer value
      */
     async getValueAsInteger(deviceId: string, attribute: DeviceAttribute): Promise<number | undefined>{
         const value = await this.getValue(deviceId, attribute);
-    
+
         if(!value || typeof value !== 'string') return undefined;
 
         const numberValue = Number.parseInt(value);
