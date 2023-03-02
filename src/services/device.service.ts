@@ -6,6 +6,7 @@ import { AxiosError, AxiosResponse } from 'axios';
 import { DeviceStatusResponse } from '../responses/device-status-response';
 import { CharacteristicValue } from 'homebridge';
 import { convertNumberToHex } from '../utils';
+import { isAferoError } from '../responses/afero-error-response';
 
 /**
  * Service for interacting with devices
@@ -35,7 +36,8 @@ export class DeviceService{
                 data: this.getDataValue(value)
             });
         }catch(ex){
-            this._platform.log.error('Remote service is not reachable.', (<AxiosError>ex).message);
+            this.handleError(<AxiosError>ex);
+
             return;
         }
 
@@ -59,7 +61,7 @@ export class DeviceService{
                 .get<DeviceStatusResponse>(`accounts/${this._platform.accountService.accountId}/devices/${deviceId}?expansions=attributes`);
             deviceStatus = response.data;
         }catch(ex){
-            this._platform.log.error('Remote service returned an error.', (<AxiosError>ex).message);
+            this.handleError(<AxiosError>ex);
 
             return undefined;
         }
@@ -115,6 +117,13 @@ export class DeviceService{
         }
 
         throw new Error('The value type is not supported.');
+    }
+
+    private handleError(error: AxiosError): void{
+        const responseData = error.response?.data;
+        const errorMessage = isAferoError(responseData) ? responseData.error_description : error.message;
+
+        this._platform.log.error('The remote service returned an error.', errorMessage);
     }
 
 }
