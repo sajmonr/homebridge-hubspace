@@ -1,3 +1,4 @@
+import { DeviceFunction } from './device-functions';
 import { DeviceType } from './device-type';
 
 /**
@@ -16,4 +17,6 @@ export interface Device{
     manufacturer: string;
     /** Device model */
     model: string[];
+    /** Supported device functions */
+    functions: DeviceFunction[];
 }

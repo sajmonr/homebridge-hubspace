@@ -1,8 +1,8 @@
 import { CharacteristicValue, PlatformAccessory } from 'homebridge';
-import { DeviceAttribute } from '../models/device-attributes';
 import { HubspacePlatform } from '../platform';
 import { HubspaceAccessory } from './hubspace-accessory';
 import { isNullOrUndefined } from '../utils';
+import { DeviceFunction } from '../models/device-functions';
 
 /**
  * Fan accessory for Hubspace platform
@@ -32,7 +32,7 @@ export class FanAccessory extends HubspaceAccessory{
 
     private async getActive(): Promise<CharacteristicValue>{
         // Try to get the value
-        const value = await this.deviceService.getValue(this.device.deviceId, DeviceAttribute.FanPower);
+        const value = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.FanPower);
 
         // If the value is not defined then show 'Not Responding'
         if(isNullOrUndefined(value)){
@@ -45,7 +45,7 @@ export class FanAccessory extends HubspaceAccessory{
 
     private async getRotationSpeed(): Promise<CharacteristicValue>{
         // Try to get the value
-        const value = await this.deviceService.getValue(this.device.deviceId, DeviceAttribute.FanSpeed);
+        const value = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.FanSpeed);
 
         // If the value is not defined then show 'Not Responding'
         if(isNullOrUndefined(value)){
@@ -57,7 +57,7 @@ export class FanAccessory extends HubspaceAccessory{
     }
 
     private async setRotationSpeed(value: CharacteristicValue): Promise<void>{
-        await this.deviceService.setValue(this.device.deviceId, DeviceAttribute.FanSpeed, value);
+        await this.deviceService.setValue(this.device.deviceId, DeviceFunction.FanSpeed, value);
     }
 
 }
