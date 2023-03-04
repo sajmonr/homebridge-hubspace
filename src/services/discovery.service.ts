@@ -1,7 +1,7 @@
 import { PlatformAccessory } from 'homebridge';
 import { HubspacePlatform } from '../platform';
 import { DeviceResponse } from '../responses/devices-response';
-import { PACKAGE_VERSION, PLATFORM_NAME, PLUGIN_NAME } from '../settings';
+import { PLATFORM_NAME, PLUGIN_NAME } from '../settings';
 import { Endpoints } from '../api/endpoints';
 import { createHttpClientWithBearerInterceptor } from '../api/http-client-factory';
 import { getDeviceTypeForKey } from '../models/device-type';
@@ -74,16 +74,10 @@ export class DiscoveryService{
     }
 
     private registerCachedAccessory(accessory: PlatformAccessory, device: Device): void{
+        accessory.context.device = device;
+        this._platform.api.updatePlatformAccessories([ accessory ]);
+
         createAccessoryForDevice(device, this._platform, accessory);
-
-        // If the accessory has been discovered previously and package number has changed
-        // then update the metadata as things might have changed.
-        if(!accessory.context.discoveredIn || accessory.context.discoveredIn !== PACKAGE_VERSION){
-            accessory.context.discoveredIn = PACKAGE_VERSION;
-            accessory.context.device = device;
-
-            this._platform.api.updatePlatformAccessories([ accessory ]);
-        }
     }
 
     private registerNewAccessory(device: Device): void{
