@@ -1,3 +1,5 @@
+import { DeviceFunctionResponse } from './device-function-response';
+
 /**
  * HTTP response for device discovery
  */
@@ -13,5 +15,6 @@ export interface DeviceResponse{
             manufacturerName: string;
             model: string;
         };
+        functions: DeviceFunctionResponse[];
     };
 }
