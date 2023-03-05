@@ -17,10 +17,18 @@ export class LightAccessory extends HubspaceAccessory{
     constructor(platform: HubspacePlatform, accessory: PlatformAccessory) {
         super(platform, accessory, platform.Service.Lightbulb);
 
-        // Configure power on/off handlers
+        this.configurePower();
+        this.configureBrightness();
+    }
+
+    private configurePower(): void{
         this.service.getCharacteristic(this.platform.Characteristic.On)
             .onGet(this.getOn.bind(this))
             .onSet(this.setOn.bind(this));
+    }
+
+    private configureBrightness(): void{
+        if(!this.supportsFunction(DeviceFunction.Brightness)) return;
 
         this.service.getCharacteristic(this.platform.Characteristic.Brightness)
             .onGet(this.getBrightness.bind(this))

@@ -17,9 +17,16 @@ export class FanAccessory extends HubspaceAccessory{
     constructor(platform: HubspacePlatform, accessory: PlatformAccessory) {
         super(platform, accessory, platform.Service.Fanv2);
 
+        this.configureActive();
+        this.configureRotationSpeed();
+    }
+
+    private configureActive(): void{
         this.service.getCharacteristic(this.platform.Characteristic.Active)
             .onGet(this.getActive.bind(this));
+    }
 
+    private configureRotationSpeed(): void{
         this.service.getCharacteristic(this.platform.Characteristic.RotationSpeed)
             .onGet(this.getRotationSpeed.bind(this))
             .onSet(this.setRotationSpeed.bind(this))
