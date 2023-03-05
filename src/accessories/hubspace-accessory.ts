@@ -1,5 +1,6 @@
 import { Logger, PlatformAccessory, Service, WithUUID } from 'homebridge';
 import { Device } from '../models/device';
+import { DeviceFunction } from '../models/device-functions';
 import { HubspacePlatform } from '../platform';
 import { DeviceService } from '../services/device.service';
 
@@ -38,11 +39,21 @@ export abstract class HubspaceAccessory{
         protected readonly platform: HubspacePlatform,
         protected readonly accessory: PlatformAccessory,
         service: WithUUID<typeof Service> | Service
-    ) { 
+    ) {
         this.service = accessory.getService(service as WithUUID<typeof Service>) || this.accessory.addService(service as Service);
 
         this.log = platform.log;
         this.deviceService = platform.deviceService;
         this.device = accessory.context.device;
     }
+
+    /**
+     * Checks whether function is supported by device
+     * @param deviceFunction Function to check
+     * @returns True if function is supported by the device otherwise false
+     */
+    protected supportsFunction(deviceFunction: DeviceFunction): boolean{
+        return this.device.functions.some(fc => fc === deviceFunction);
+    }
+
 }

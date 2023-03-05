@@ -1,13 +1,15 @@
 import { PlatformAccessory } from 'homebridge';
 import { HubspacePlatform } from '../platform';
 import { DeviceResponse } from '../responses/devices-response';
-import { PACKAGE_VERSION, PLATFORM_NAME, PLUGIN_NAME } from '../settings';
+import { PLATFORM_NAME, PLUGIN_NAME } from '../settings';
 import { Endpoints } from '../api/endpoints';
 import { createHttpClientWithBearerInterceptor } from '../api/http-client-factory';
 import { getDeviceTypeForKey } from '../models/device-type';
 import { Device } from '../models/device';
 import { createAccessoryForDevice } from '../accessories/device-accessory-factory';
 import { AxiosError } from 'axios';
+import { DeviceFunction, DeviceFunctions } from '../models/device-functions';
+import { DeviceFunctionResponse } from '../responses/device-function-response';
 
 /**
  * Service for discovering and managing devices
@@ -74,16 +76,10 @@ export class DiscoveryService{
     }
 
     private registerCachedAccessory(accessory: PlatformAccessory, device: Device): void{
+        accessory.context.device = device;
+        this._platform.api.updatePlatformAccessories([ accessory ]);
+
         createAccessoryForDevice(device, this._platform, accessory);
-
-        // If the accessory has been discovered previously and package number has changed
-        // then update the metadata as things might have changed.
-        if(!accessory.context.discoveredIn || accessory.context.discoveredIn !== PACKAGE_VERSION){
-            accessory.context.discoveredIn = PACKAGE_VERSION;
-            accessory.context.device = device;
-
-            this._platform.api.updatePlatformAccessories([ accessory ]);
-        }
     }
 
     private registerNewAccessory(device: Device): void{
@@ -122,8 +118,26 @@ export class DiscoveryService{
             name: response.friendlyName,
             type: type,
             manufacturer: response.description.device.manufacturerName,
-            model: response.description.device.model.split(',').map(m => m.trim())
+            model: response.description.device.model.split(',').map(m => m.trim()),
+            functions: this.getFunctionsFromResponse(response.description.functions)
         };
+    }
+
+    private getFunctionsFromResponse(supportedFunctions: DeviceFunctionResponse[]): DeviceFunction[]{
+        const output: DeviceFunction[] = [];
+
+        for(const fc of supportedFunctions){
+            // Get the type for the function
+            const type = DeviceFunctions
+                .find(df => df.functionInstanceName === fc.functionInstance && df.functionClass === fc.functionClass)
+                ?.type;
+
+            if(type === undefined || output.indexOf(type) >= 0) continue;
+
+            output.push(type);
+        }
+
+        return output;
     }
 
 }

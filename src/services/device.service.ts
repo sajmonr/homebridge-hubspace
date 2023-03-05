@@ -1,12 +1,12 @@
 import { HubspacePlatform } from '../platform';
 import { Endpoints } from '../api/endpoints';
 import { createHttpClientWithBearerInterceptor } from '../api/http-client-factory';
-import { DeviceAttribute } from '../models/device-attributes';
 import { AxiosError, AxiosResponse } from 'axios';
 import { DeviceStatusResponse } from '../responses/device-status-response';
 import { CharacteristicValue } from 'homebridge';
 import { convertNumberToHex } from '../utils';
 import { isAferoError } from '../responses/afero-error-response';
+import { DeviceFunction, getDeviceFunctionDef } from '../models/device-functions';
 
 /**
  * Service for interacting with devices
@@ -23,16 +23,17 @@ export class DeviceService{
     /**
      * Sets an attribute value for a device
      * @param deviceId ID of a device
-     * @param attribute Attribute to set
+     * @param deviceFunction Function to set value for
      * @param value Value to set to attribute
      */
-    async setValue(deviceId: string, attribute: DeviceAttribute, value: CharacteristicValue): Promise<void>{
+    async setValue(deviceId: string, deviceFunction: DeviceFunction, value: CharacteristicValue): Promise<void>{
+        const functionDef = getDeviceFunctionDef(deviceFunction);
         let response: AxiosResponse;
 
         try{
             response = await this._httpClient.post(`accounts/${this._platform.accountService.accountId}/devices/${deviceId}/actions`, {
                 type: 'attribute_write',
-                attrId: attribute,
+                attrId: functionDef.attributeId,
                 data: this.getDataValue(value)
             });
         }catch(ex){
@@ -49,10 +50,11 @@ export class DeviceService{
     /**
      * Gets a value for attribute
      * @param deviceId ID of a device
-     * @param attribute Attribute to get value for
+     * @param deviceFunction Function to get value for
      * @returns Data value
      */
-    async getValue(deviceId: string, attribute: DeviceAttribute): Promise<CharacteristicValue | undefined>{
+    async getValue(deviceId: string, deviceFunction: DeviceFunction): Promise<CharacteristicValue | undefined>{
+        const functionDef = getDeviceFunctionDef(deviceFunction);
         let deviceStatus: DeviceStatusResponse;
 
         try{
@@ -66,10 +68,10 @@ export class DeviceService{
             return undefined;
         }
 
-        const attributeResponse = deviceStatus.attributes.find(a => a.id === attribute);
+        const attributeResponse = deviceStatus.attributes.find(a => a.id === functionDef.attributeId);
 
         if(!attributeResponse){
-            this._platform.log.error(`Failed to find value for ${attribute} for device (device ID: ${deviceId})`);
+            this._platform.log.error(`Failed to find value for ${functionDef.functionInstanceName} for device (device ID: ${deviceId})`);
             return undefined;
         }
 
@@ -79,11 +81,11 @@ export class DeviceService{
     /**
      * Gets a value for attribute as boolean
      * @param deviceId ID of a device
-     * @param attribute Attribute to get value for
+     * @param deviceFunction Function to get value for
      * @returns Boolean value
      */
-    async getValueAsBoolean(deviceId: string, attribute: DeviceAttribute): Promise<boolean | undefined>{
-        const value = await this.getValue(deviceId, attribute);
+    async getValueAsBoolean(deviceId: string, deviceFunction: DeviceFunction): Promise<boolean | undefined>{
+        const value = await this.getValue(deviceId, deviceFunction);
 
         if(!value) return undefined;
 
@@ -93,11 +95,11 @@ export class DeviceService{
     /**
      * Gets a value for attribute as integer
      * @param deviceId ID of a device
-     * @param attribute Attribute to get value for
+     * @param deviceFunction Function to get value for
      * @returns Integer value
      */
-    async getValueAsInteger(deviceId: string, attribute: DeviceAttribute): Promise<number | undefined>{
-        const value = await this.getValue(deviceId, attribute);
+    async getValueAsInteger(deviceId: string, deviceFunction: DeviceFunction): Promise<number | undefined>{
+        const value = await this.getValue(deviceId, deviceFunction);
 
         if(!value || typeof value !== 'string') return undefined;
 
