@@ -3,6 +3,7 @@ import { TokenService } from './services/token.service';
 import { AccountService } from './services/account.service';
 import { DiscoveryService } from './services/discovery.service';
 import { DeviceService } from './services/device.service';
+import { isConfigValid } from './config';
 
 /**
  * HomebridgePlatform
@@ -12,16 +13,21 @@ import { DeviceService } from './services/device.service';
 export class HubspacePlatform implements DynamicPlatformPlugin {
     public readonly Service: typeof Service = this.api.hap.Service;
     public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
-    public readonly accountService: AccountService;
-    public readonly deviceService: DeviceService;
+    public readonly accountService!: AccountService;
+    public readonly deviceService!: DeviceService;
 
-    private readonly _discoveryService: DiscoveryService;
+    private readonly _discoveryService!: DiscoveryService;
+    private _isInitialized = false;
 
     constructor(
         public readonly log: Logger,
         public readonly config: PlatformConfig,
         public readonly api: API
     ) {
+        if(!isConfigValid(config)){
+            this.log.error('Configuration is invalid. Platform will not start.');
+            return;
+        }
         // Init token service as singleton
         TokenService.init(this.config.username, this.config.password);
         // Configure private services
@@ -34,7 +40,8 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
         this.accountService.onAccountLoaded(this._discoveryService.discoverDevices.bind(this._discoveryService));
         this.api.on('didFinishLaunching', async () => this.accountService.loadAccount());
 
-        this.log.debug('Finished initializing platform:', this.config.name);
+        // Mark platform as initialized
+        this._isInitialized = true;
     }
 
     /**
@@ -42,6 +49,9 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
    * It should be used to setup event handlers for characteristics and update respective values.
    */
     configureAccessory(accessory: PlatformAccessory) {
+        // Do not restore cached accessories if there was an error during initialization
+        if(!this._isInitialized) return;
+
         this._discoveryService.configureCachedAccessory(accessory);
     }
 }
