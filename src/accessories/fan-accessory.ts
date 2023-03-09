@@ -23,7 +23,8 @@ export class FanAccessory extends HubspaceAccessory{
 
     private configureActive(): void{
         this.service.getCharacteristic(this.platform.Characteristic.Active)
-            .onGet(this.getActive.bind(this));
+            .onGet(this.getActive.bind(this))
+            .onSet(this.setActive.bind(this));
     }
 
     private configureRotationSpeed(): void{
@@ -35,6 +36,10 @@ export class FanAccessory extends HubspaceAccessory{
                 maxValue: 100,
                 minStep: 25
             });
+    }
+
+    private async setActive(value: CharacteristicValue): Promise<void>{
+        this.deviceService.setValue(this.device.deviceId, DeviceFunction.FanPower, value);
     }
 
     private async getActive(): Promise<CharacteristicValue>{
