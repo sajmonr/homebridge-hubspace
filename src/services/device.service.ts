@@ -4,7 +4,7 @@ import { createHttpClientWithBearerInterceptor } from '../api/http-client-factor
 import { AxiosError, AxiosResponse } from 'axios';
 import { DeviceStatusResponse } from '../responses/device-status-response';
 import { CharacteristicValue } from 'homebridge';
-import { convertNumberToHex } from '../utils';
+import { convertNumberToHexReverse } from '../utils';
 import { isAferoError } from '../responses/afero-error-response';
 import { DeviceFunction, getDeviceFunctionDef } from '../models/device-functions';
 
@@ -115,7 +115,7 @@ export class DeviceService{
         }
 
         if(typeof value === 'number'){
-            return convertNumberToHex(value);
+            return convertNumberToHexReverse(value);
         }
 
         throw new Error('The value type is not supported.');
