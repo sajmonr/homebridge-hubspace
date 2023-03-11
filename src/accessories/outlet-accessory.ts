@@ -39,7 +39,7 @@ export class OutletAccessory extends HubspaceAccessory{
     }
 
     private async setOn(value: CharacteristicValue): Promise<void>{
-        await this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightPower, value);
+        await this.deviceService.setValue(this.device.deviceId, DeviceFunction.OutletPower, value);
     }
 
 }
