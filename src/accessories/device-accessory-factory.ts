@@ -5,6 +5,7 @@ import { HubspacePlatform } from '../platform';
 import { FanAccessory } from './fan-accessory';
 import { HubspaceAccessory } from './hubspace-accessory';
 import { LightAccessory } from './light-accessory';
+import { OutletAccessory } from './outlet-accessory';
 
 /**
  * Creates {@link HubspaceAccessory} for a specific {@link DeviceType}
@@ -20,6 +21,8 @@ export function createAccessoryForDevice(device: Device, platform: HubspacePlatf
             return new LightAccessory(platform, accessory);
         case DeviceType.Fan:
             return new FanAccessory(platform, accessory);
+        case DeviceType.Outlet:
+            return new OutletAccessory(platform, accessory);
         default:
             throw new Error(`Accessory of type '${device.type}' is not supported.`);
     }

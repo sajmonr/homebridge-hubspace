@@ -1,9 +1,10 @@
-/** 
+/**
  * Type of a device
  */
 export enum DeviceType{
     Light = 'light',
-    Fan = 'fan'
+    Fan = 'fan',
+    Outlet = 'power-outlet'
 }
 
 /**
@@ -17,6 +18,8 @@ export function getDeviceTypeForKey(key: string): DeviceType | undefined{
             return DeviceType.Light;
         case 'fan':
             return DeviceType.Fan;
+        case 'power-outlet':
+            return DeviceType.Outlet;
         default:
             return undefined;
     }

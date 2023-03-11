@@ -8,6 +8,7 @@ export enum DeviceFunction{
     Brightness,
     FanPower,
     FanSpeed
+    OutletPower,
 }
 
 /**
@@ -37,6 +38,11 @@ export const DeviceFunctions: DeviceFunctionDef[] = [
         attributeId: 6,
         functionClass: 'fan-speed',
         functionInstanceName: 'fan-speed'
+    },
+    {
+        type: DeviceFunction.OutletPower,
+        attributeId: 2,
+        functionClass: 'power'
     }
 ];
 
