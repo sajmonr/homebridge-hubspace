@@ -9,9 +9,6 @@ import { DeviceFunction } from '../models/device-functions';
  */
 export class LightAccessory extends HubspaceAccessory{
 
-    private hue = -1;
-    private saturation = -1;
-
     /**
      * Crates a new instance of the accessory
      * @param platform Hubspace platform
@@ -74,14 +71,14 @@ export class LightAccessory extends HubspaceAccessory{
             throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
 
-        this.log.info(`${this.device.name}: Received ${value} from Hubspace Power`);
+        this.log.debug(`${this.device.name}: Received ${value} from Hubspace Power`);
 
         // Otherwise return the value
         return value!;
     }
 
     private async setOn(value: CharacteristicValue): Promise<void>{
-        this.log.info(`${this.device.name}: Received ${value} from Homekit Power`);
+        this.log.debug(`${this.device.name}: Received ${value} from Homekit Power`);
         await this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightPower, value);
     }
 
@@ -96,7 +93,7 @@ export class LightAccessory extends HubspaceAccessory{
             throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
 
-        this.log.info(`${this.device.name}: Received ${value} from Hubspace Brightness`);
+        this.log.debug(`${this.device.name}: Received ${value} from Hubspace Brightness`);
 
         // Otherwise return the value
         return value!;
@@ -104,7 +101,7 @@ export class LightAccessory extends HubspaceAccessory{
 
     private async setBrightness(value: CharacteristicValue): Promise<void>{
         // TODO: handle the 0 brightness value as off
-        this.log.info(`${this.device.name}: Received ${value} from Homekit Brightness`);
+        this.log.debug(`${this.device.name}: Received ${value} from Homekit Brightness`);
         this.deviceService.setValue(this.device.deviceId, DeviceFunction.Brightness, value);
     }
 
@@ -120,7 +117,7 @@ export class LightAccessory extends HubspaceAccessory{
         }
 
         const value = normalizeValue(kelvin as number, 6500, 2200, 140, 500, 1);
-        this.log.info(`${this.device.name}: Received ${kelvin} from Hubspace Color Temperature, sending ${value} to Homebridge`);
+        this.log.debug(`${this.device.name}: Received ${kelvin} from Hubspace Color Temperature, sending ${value} to Homebridge`);
 
         // Otherwise return the value
         return value!;
@@ -131,12 +128,21 @@ export class LightAccessory extends HubspaceAccessory{
         // and Hubbridge expects values of a different scale such as 2200K to 6500K
         // with a step of 100
         const kelvin = normalizeValue(value as number, 140, 500, 6500, 2200, 100);
-        this.log.info(`${this.device.name}: Received ${value} from Homekit Color Temperature, sending ${kelvin}K to Hubridge`);
+        this.log.debug(`${this.device.name}: Received ${value} from Homekit Color Temperature, sending ${kelvin}K to Hubridge`);
         this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightTemperature, kelvin);
     }
 
+    /**
+     * Hue and Saturation work odd in Homekit. As Hubspace works in RGB color space with one item, Hue and Saturation
+     * can come over in any order from Homekit. So we need to keep track of who is sent first and update once the other
+     * comes over.
+     */
+    private hue : CharacteristicValue = -1;
+    private saturation : CharacteristicValue = -1;
+
     private async getHue(): Promise<CharacteristicValue>{
         this.setColorMode();
+
         // Try to get the value
         const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
 
@@ -149,7 +155,7 @@ export class LightAccessory extends HubspaceAccessory{
 
         const [r, g, b] = hexToRgb(rgb as string);
         const [h, s, v] = rgbToHsv(r, g, b);
-        this.log.info(
+        this.log.debug(
             `${this.device.name}: Received ${rgb} from Hubspace Color RGB, sending ${h} to Homebridge for Hue`);
 
         // Otherwise return the value
@@ -159,24 +165,32 @@ export class LightAccessory extends HubspaceAccessory{
     private async setHue(value: CharacteristicValue): Promise<void>{
         this.setColorMode();
 
-        const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
+        // Both values are unknown, so set Hue and expect Saturation to send it over once that is received
+        if (this.hue === -1 && this.saturation === -1) {
+            this.hue = value;
 
-        // If the value is not defined then show 'Not Responding'
-        if(isNullOrUndefined(rgb) || rgb === -1){
-            this.log.error(`${this.device.name}: Received Comm Failure for get Saturation`);
-            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+            this.log.debug(
+                `${this.device.name}: Received ${value} from Homekit Hue, waiting for Saturation`);
+
+            return;
+        }
+        // Saturation has already been sent over, it's now Hue job to send over the RGB value with the saturation value
+        else if (this.hue === -1 && this.saturation !== -1) {
+            const [r, g, b] = hsvToRgb(value as number, this.saturation as number, 100);
+
+            // Set Saturation back to unknown
+            this.saturation = -1;
+
+            const hexRgb = rgbToHex(r, g, b);
+
+            this.log.debug(
+                `${this.device.name}: Received ${value} from Homekit Hue, sending ${hexRgb} from to Hubspace Color RGB`);
+
+            this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
+        } else {
+            this.log.error(`${this.device.name}: Received ${value} from Homekit Hue, but cannot send without a Saturation value`);
         }
 
-        // Preform a read, modify, write of RGB with Hue
-        let [r, g, b] = hexToRgb(rgb as string);
-        const [h, s, v] = rgbToHsv(r, g, b);
-        [r, g, b] = hsvToRgb(value as number, s, v);
-        const hexRgb = rgbToHex(r, g, b);
-
-        this.log.info(
-            `${this.device.name}: Received ${value} from Homekit Hue, sending ${hexRgb} from ${rgb} to Hubspace Color RGB`);
-
-        this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
     }
 
     private async getSaturation(): Promise<CharacteristicValue>{
@@ -191,7 +205,7 @@ export class LightAccessory extends HubspaceAccessory{
 
         const [r, g, b] = hexToRgb(rgb as string);
         const [h, s, v] = rgbToHsv(r, g, b);
-        this.log.info(
+        this.log.debug(
             `${this.device.name}: Received ${rgb} from Hubspace Color RGB, sending ${s} to Homebridge for Saturation`);
 
         // Otherwise return the value
@@ -201,27 +215,37 @@ export class LightAccessory extends HubspaceAccessory{
     private async setSaturation(value: CharacteristicValue): Promise<void>{
         this.setColorMode();
 
-        const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
+        // Both values are unknown, so set Saturation and expect Hue to send it over once that is received
+        if (this.hue === -1 && this.saturation === -1) {
+            this.saturation = value;
 
-        // If the value is not defined then show 'Not Responding'
-        if(isNullOrUndefined(rgb) || rgb === -1){
-            this.log.error(`${this.device.name}: Received Comm Failure for get Saturation`);
-            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+            this.log.debug(
+                `${this.device.name}: Received ${value} from Homekit Saturation, waiting for Hue`);
+
+            return;
         }
+        // Saturation has already been sent over, it's now Hue job to send over the RGB value with the saturation value
+        else if (this.hue !== -1 && this.saturation === -1) {
+            const [r, g, b] = hsvToRgb(this.hue as number, value as number, 100);
 
-        // Preform a read, modify, write of RGB with Saturation
-        let [r, g, b] = hexToRgb(rgb as string);
-        const [h, s, v] = rgbToHsv(r, g, b);
-        [r, g, b] = hsvToRgb(h, value as number, v);
-        const hexRgb = rgbToHex(r, g, b);
+            // Set hue back to unknown
+            this.hue = -1;
 
-        this.log.info(
-            `${this.device.name}: Received ${value} from Homekit Saturation, sending ${hexRgb} from ${rgb} to Hubspace Color RGB`);
+            const hexRgb = rgbToHex(r, g, b);
 
-        // this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
+            this.log.debug(
+                `${this.device.name}: Received ${value} from Homekit Saturation, sending ${hexRgb} from to Hubspace Color RGB`);
+
+            this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
+        } else {
+            this.log.error(`${this.device.name}: Received ${value} from Homekit Saturation, but cannot send without a Hue value`);
+        }
     }
 
     private setColorMode(): void{
+        // Color Mode is a boolean value used to switch between temperature and color modes, 1 is for Color RGB Mode and 0 is for
+        // Color Temperature Mode. It is possible for a user to change it back in to Color Temperature Mode using the Hubspace app
+        // but homekit should only be working in color RGB mode if the lightbulb supports color.
         this.deviceService.setValue(this.device.deviceId, DeviceFunction.ColorMode, 1);
     }
 }
