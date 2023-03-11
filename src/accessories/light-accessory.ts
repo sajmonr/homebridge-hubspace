@@ -91,10 +91,10 @@ export class LightAccessory extends HubspaceAccessory{
 
         // TODO: understand what undefined would look like for this??
         // If the value is not defined then show 'Not Responding'
-        // if(isNullOrUndefined(value) || value === -1){
-        //     this.log.error(`${this.device.name}: Received Comm Failure for get Brightness`);
-        //     throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-        // }
+        if(isNullOrUndefined(value) || value === -1){
+            this.log.error(`${this.device.name}: Received Comm Failure for get Brightness`);
+            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        }
 
         this.log.info(`${this.device.name}: Received ${value} from Hubspace Brightness`);
 
@@ -114,10 +114,10 @@ export class LightAccessory extends HubspaceAccessory{
 
         // TODO: understand what undefined would look like for this??
         // If the value is not defined then show 'Not Responding'
-        // if(isNullOrUndefined(kelvin) || kelvin === -1){
-        //     this.log.error(`${this.device.name}: Received Comm Failure for get Temperature`);
-        //     throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-        // }
+        if(isNullOrUndefined(kelvin) || kelvin === -1){
+            this.log.error(`${this.device.name}: Received Comm Failure for get Temperature`);
+            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        }
 
         const value = normalizeValue(kelvin as number, 6500, 2200, 140, 500, 1);
         this.log.info(`${this.device.name}: Received ${kelvin} from Hubspace Color Temperature, sending ${value} to Homebridge`);
@@ -149,7 +149,8 @@ export class LightAccessory extends HubspaceAccessory{
 
         const [r, g, b] = hexToRgb(rgb as string);
         const [h, s, v] = rgbToHsv(r, g, b);
-        this.log.info(`${this.device.name}: Received ${rgb} from Hubspace Color RGB, sending ${h} to Homebridge for Hue`);
+        this.log.info(
+            `${this.device.name}: Received ${rgb} from Hubspace Color RGB, sending ${h} to Homebridge for Hue`);
 
         // Otherwise return the value
         return (h as CharacteristicValue)!;
@@ -160,21 +161,22 @@ export class LightAccessory extends HubspaceAccessory{
 
         const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
 
-        // TODO: understand what undefined would look like for this??
         // If the value is not defined then show 'Not Responding'
-        // if(isNullOrUndefined(rgb) || rgb === -1)
-        {
-
-            // Preform a read, modify, write of RGB with Hue
-            let [r, g, b] = hexToRgb(rgb as string);
-            const [h, s, v] = rgbToHsv(r, g, b);
-            [r, g, b] = hsvToRgb(value as number, s, v);
-            const hexRgb = rgbToHex(r, g, b);
-
-            this.log.info(`${this.device.name}: Received ${value} from Homekit Hue, sending ${hexRgb} from ${rgb} to Hubspace Color RGB`);
-
-            this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
+        if(isNullOrUndefined(rgb) || rgb === -1){
+            this.log.error(`${this.device.name}: Received Comm Failure for get Saturation`);
+            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
+
+        // Preform a read, modify, write of RGB with Hue
+        let [r, g, b] = hexToRgb(rgb as string);
+        const [h, s, v] = rgbToHsv(r, g, b);
+        [r, g, b] = hsvToRgb(value as number, s, v);
+        const hexRgb = rgbToHex(r, g, b);
+
+        this.log.info(
+            `${this.device.name}: Received ${value} from Homekit Hue, sending ${hexRgb} from ${rgb} to Hubspace Color RGB`);
+
+        this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
     }
 
     private async getSaturation(): Promise<CharacteristicValue>{
@@ -189,7 +191,8 @@ export class LightAccessory extends HubspaceAccessory{
 
         const [r, g, b] = hexToRgb(rgb as string);
         const [h, s, v] = rgbToHsv(r, g, b);
-        this.log.info(`${this.device.name}: Received ${rgb} from Hubspace Color RGB, sending ${s} to Homebridge for Saturation`);
+        this.log.info(
+            `${this.device.name}: Received ${rgb} from Hubspace Color RGB, sending ${s} to Homebridge for Saturation`);
 
         // Otherwise return the value
         return (s as CharacteristicValue)!;
@@ -200,20 +203,22 @@ export class LightAccessory extends HubspaceAccessory{
 
         const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
 
-        // TODO: understand what undefined would look like for this??
         // If the value is not defined then show 'Not Responding'
-        // if(isNullOrUndefined(rgb) || rgb === -1)
-        {
-            // Preform a read, modify, write of RGB with Saturation
-            let [r, g, b] = hexToRgb(rgb as string);
-            const [h, s, v] = rgbToHsv(r, g, b);
-            [r, g, b] = hsvToRgb(h, value as number, v);
-            const hexRgb = rgbToHex(r, g, b);
-
-            this.log.info(`${this.device.name}: Received ${value} from Homekit Saturation, sending ${hexRgb} from ${rgb} to Hubspace Color RGB`);
-
-            // this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
+        if(isNullOrUndefined(rgb) || rgb === -1){
+            this.log.error(`${this.device.name}: Received Comm Failure for get Saturation`);
+            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
+
+        // Preform a read, modify, write of RGB with Saturation
+        let [r, g, b] = hexToRgb(rgb as string);
+        const [h, s, v] = rgbToHsv(r, g, b);
+        [r, g, b] = hsvToRgb(h, value as number, v);
+        const hexRgb = rgbToHex(r, g, b);
+
+        this.log.info(
+            `${this.device.name}: Received ${value} from Homekit Saturation, sending ${hexRgb} from ${rgb} to Hubspace Color RGB`);
+
+        // this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
     }
 
     private setColorMode(): void{
