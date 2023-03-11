@@ -1,13 +1,16 @@
 import { CharacteristicValue, PlatformAccessory } from 'homebridge';
 import { HubspacePlatform } from '../platform';
 import { HubspaceAccessory } from './hubspace-accessory';
-import { isNullOrUndefined, normalizeValue } from '../utils';
+import { isNullOrUndefined, normalizeValue, hexToRgb, rgbToHsv, hsvToRgb, rgbToHex } from '../utils';
 import { DeviceFunction } from '../models/device-functions';
 
 /**
  * Light accessory for Hubspace platform
  */
 export class LightAccessory extends HubspaceAccessory{
+
+    private hue = -1;
+    private saturation = -1;
 
     /**
      * Crates a new instance of the accessory
@@ -22,8 +25,7 @@ export class LightAccessory extends HubspaceAccessory{
 
         // * If [Color Temperature] characteristic is included in the `Light Bulb`, `Hue` and `Saturation` must not be included as optional
         // * characteristics in `Light Bulb`. This characteristic must not be used for lamps which support color.
-        //if(this.configureColor())
-        {
+        if(!this.configureColor()) {
             this.configureTemperature();
         }
     }
@@ -72,43 +74,53 @@ export class LightAccessory extends HubspaceAccessory{
             throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         }
 
+        this.log.info(`${this.device.name}: Received ${value} from Hubspace Power`);
+
         // Otherwise return the value
         return value!;
     }
 
     private async setOn(value: CharacteristicValue): Promise<void>{
+        this.log.info(`${this.device.name}: Received ${value} from Homekit Power`);
         await this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightPower, value);
     }
 
     private async getBrightness(): Promise<CharacteristicValue>{
         // Try to get the value
         const value = await this.deviceService.getValueAsInteger(this.device.deviceId, DeviceFunction.Brightness);
-        this.log.debug(`${this.device.name}: Received ${value} from Hubspace Brightness`);
 
+        // TODO: understand what undefined would look like for this??
         // If the value is not defined then show 'Not Responding'
-        if(isNullOrUndefined(value) || value === -1){
-            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-        }
+        // if(isNullOrUndefined(value) || value === -1){
+        //     this.log.error(`${this.device.name}: Received Comm Failure for get Brightness`);
+        //     throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        // }
+
+        this.log.info(`${this.device.name}: Received ${value} from Hubspace Brightness`);
 
         // Otherwise return the value
         return value!;
     }
 
     private async setBrightness(value: CharacteristicValue): Promise<void>{
-        this.log.debug(`${this.device.name}: Received ${value} from Homekit Brightness`);
+        // TODO: handle the 0 brightness value as off
+        this.log.info(`${this.device.name}: Received ${value} from Homekit Brightness`);
         this.deviceService.setValue(this.device.deviceId, DeviceFunction.Brightness, value);
     }
 
     private async getTemperature(): Promise<CharacteristicValue>{
         // Try to get the value
         const kelvin = await this.deviceService.getValueAsInteger(this.device.deviceId, DeviceFunction.LightTemperature);
-        const value = normalizeValue(kelvin as number, 6500, 2200, 140, 500, 1);
-        this.log.debug(`${this.device.name}: Received ${kelvin} from Hubspace Color Temperature, sending ${value} to Homebridge`);
 
+        // TODO: understand what undefined would look like for this??
         // If the value is not defined then show 'Not Responding'
-        if(isNullOrUndefined(value) || value === -1){
-            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-        }
+        // if(isNullOrUndefined(kelvin) || kelvin === -1){
+        //     this.log.error(`${this.device.name}: Received Comm Failure for get Temperature`);
+        //     throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        // }
+
+        const value = normalizeValue(kelvin as number, 6500, 2200, 140, 500, 1);
+        this.log.info(`${this.device.name}: Received ${kelvin} from Hubspace Color Temperature, sending ${value} to Homebridge`);
 
         // Otherwise return the value
         return value!;
@@ -119,44 +131,92 @@ export class LightAccessory extends HubspaceAccessory{
         // and Hubbridge expects values of a different scale such as 2200K to 6500K
         // with a step of 100
         const kelvin = normalizeValue(value as number, 140, 500, 6500, 2200, 100);
-        this.log.debug(`${this.device.name}: Received ${value} from Homekit Color Temperature, sending ${kelvin}K to Hubridge`);
+        this.log.info(`${this.device.name}: Received ${value} from Homekit Color Temperature, sending ${kelvin}K to Hubridge`);
         this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightTemperature, kelvin);
     }
 
     private async getHue(): Promise<CharacteristicValue>{
+        this.setColorMode();
         // Try to get the value
-        const value = await this.deviceService.getValueAsInteger(this.device.deviceId, DeviceFunction.LightColor);
+        const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
 
+        // TODO: understand what undefined would look like for this??
         // If the value is not defined then show 'Not Responding'
-        if(isNullOrUndefined(value) || value === -1){
-            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-        }
-
-        // Otherwise return the value
-        return value!;
-    }
-
-    private async setHue(value: CharacteristicValue): Promise<void>{
-
-
-        // this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, value);
-    }
-
-    private async getSaturation(): Promise<CharacteristicValue>{
-        // // Try to get the value
-        // const value = await this.deviceService.getValueAsInteger(this.device.deviceId, DeviceFunction.LightColor);
-
-        // // If the value is not defined then show 'Not Responding'
-        // if(isNullOrUndefined(value) || value === -1){
+        // if(isNullOrUndefined(rgb) || rgb === -1){
+        //     this.log.error(`${this.device.name}: Received Comm Failure for get Hue`);
         //     throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
         // }
 
-        const value = 0;
+        const [r, g, b] = hexToRgb(rgb as string);
+        const [h, s, v] = rgbToHsv(r, g, b);
+        this.log.info(`${this.device.name}: Received ${rgb} from Hubspace Color RGB, sending ${h} to Homebridge for Hue`);
+
         // Otherwise return the value
-        return value!;
+        return (h as CharacteristicValue)!;
+    }
+
+    private async setHue(value: CharacteristicValue): Promise<void>{
+        this.setColorMode();
+
+        const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
+
+        // TODO: understand what undefined would look like for this??
+        // If the value is not defined then show 'Not Responding'
+        // if(isNullOrUndefined(rgb) || rgb === -1)
+        {
+
+            // Preform a read, modify, write of RGB with Hue
+            let [r, g, b] = hexToRgb(rgb as string);
+            const [h, s, v] = rgbToHsv(r, g, b);
+            [r, g, b] = hsvToRgb(value as number, s, v);
+            const hexRgb = rgbToHex(r, g, b);
+
+            this.log.info(`${this.device.name}: Received ${value} from Homekit Hue, sending ${hexRgb} from ${rgb} to Hubspace Color RGB`);
+
+            this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
+        }
+    }
+
+    private async getSaturation(): Promise<CharacteristicValue>{
+        this.setColorMode();
+        // Try to get the value
+        const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
+        // If the value is not defined then show 'Not Responding'
+        if(isNullOrUndefined(rgb) || rgb === -1){
+            this.log.error(`${this.device.name}: Received Comm Failure for get Saturation`);
+            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        }
+
+        const [r, g, b] = hexToRgb(rgb as string);
+        const [h, s, v] = rgbToHsv(r, g, b);
+        this.log.info(`${this.device.name}: Received ${rgb} from Hubspace Color RGB, sending ${s} to Homebridge for Saturation`);
+
+        // Otherwise return the value
+        return (s as CharacteristicValue)!;
     }
 
     private async setSaturation(value: CharacteristicValue): Promise<void>{
-        this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, value);
+        this.setColorMode();
+
+        const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
+
+        // TODO: understand what undefined would look like for this??
+        // If the value is not defined then show 'Not Responding'
+        // if(isNullOrUndefined(rgb) || rgb === -1)
+        {
+            // Preform a read, modify, write of RGB with Saturation
+            let [r, g, b] = hexToRgb(rgb as string);
+            const [h, s, v] = rgbToHsv(r, g, b);
+            [r, g, b] = hsvToRgb(h, value as number, v);
+            const hexRgb = rgbToHex(r, g, b);
+
+            this.log.info(`${this.device.name}: Received ${value} from Homekit Saturation, sending ${hexRgb} from ${rgb} to Hubspace Color RGB`);
+
+            // this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
+        }
+    }
+
+    private setColorMode(): void{
+        this.deviceService.setValue(this.device.deviceId, DeviceFunction.ColorMode, 1);
     }
 }

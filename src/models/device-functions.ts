@@ -10,7 +10,8 @@ export enum DeviceFunction{
     FanSpeed,
     OutletPower,
     LightTemperature,
-    LightColor
+    LightColor,
+    ColorMode
 }
 
 /**
@@ -72,6 +73,14 @@ export const DeviceFunctions: DeviceFunctionDef[] = [
         type: DeviceFunction.LightColor,
         attributeId: 4,
         functionClass: 'color-rgb'
+    },
+    // This is to switch between Temperature (val:0) and Color (val:1) Light Modes, as Homekit sees these as mutually
+    // exclusive, the value should always be Color (val:1) when being controlled by Homekit, otherwise 'undefined' will
+    // be returned when reading the current color setting
+    {
+        type: DeviceFunction.ColorMode,
+        attributeId: 5,
+        functionClass: 'color-mode'
     }
 ];
 

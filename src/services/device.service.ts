@@ -110,6 +110,10 @@ export class DeviceService{
 
     private getDataValue(value: CharacteristicValue): string{
 
+        if(typeof value === 'string'){
+            return value;
+        }
+
         if(typeof value === 'boolean'){
             return value ? '01' : '00';
         }
