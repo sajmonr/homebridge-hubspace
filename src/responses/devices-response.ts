@@ -10,10 +10,10 @@ export interface DeviceResponse{
     typeId: string;
     friendlyName: string;
     description: {
-        key: string;
         device: {
             manufacturerName: string;
             model: string;
+            deviceClass: string;
         };
         functions: DeviceFunctionResponse[];
     };

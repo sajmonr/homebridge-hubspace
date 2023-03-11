@@ -108,7 +108,7 @@ export class DiscoveryService{
     }
 
     private mapDeviceResponseToModel(response: DeviceResponse): Device | undefined{
-        const type = getDeviceTypeForKey(response.description.key);
+        const type = getDeviceTypeForKey(response.description.device.deviceClass);
 
         if(!type) return undefined;
 
