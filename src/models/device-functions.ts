@@ -7,7 +7,7 @@ export enum DeviceFunction{
     LightPower,
     Brightness,
     FanPower,
-    FanSpeed
+    FanSpeed,
     OutletPower,
 }
 
