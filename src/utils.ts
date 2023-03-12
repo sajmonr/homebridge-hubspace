@@ -1,3 +1,5 @@
+import { ColorConverter } from 'color-convert';
+
 /**
  * Checks whether at least one value is null or undefined
  * @param values Values to check
@@ -130,4 +132,40 @@ export function rgbToHsv(r: number, g: number, b: number): [number, number, numb
     }
 
     return [h, s, v * 100];
+}
+
+export function rgbToMired(rgb: [number, number, number]): number {
+    // Convert RGB color to CIE 1931 XYZ color space
+    const xyz = ColorConverter.rgb.xyz(rgb);
+
+    // Convert CIE 1931 XYZ color to CIE 1931 (x, y) chromaticity coordinates
+    const [x, y] = ColorConverter.xyz.xy(xyz);
+
+    // Convert (x, y) chromaticity coordinates to Mired
+    const colorTemperature = 1 / ((0.23881 * x) + (0.25499 * y) - 0.58291);
+    const mired = Math.round(1000000 / colorTemperature);
+
+    return mired;
+}
+
+export function kelvinToRgb(kelvin: number): [number, number, number] {
+    const temperature = kelvin / 100;
+
+    let red, green, blue;
+
+    if (temperature <= 66) {
+        red = 255;
+        green = 99.4708025861 * Math.log(temperature) - 161.1195681661;
+        blue = temperature <= 19 ? 0 : 138.5177312231 * Math.log(temperature - 10) - 305.0447927307;
+    } else {
+        red = 329.698727446 * Math.pow(temperature - 60, -0.1332047592);
+        green = 288.1221695283 * Math.pow(temperature - 60, -0.0755148492);
+        blue = 255;
+    }
+
+    return [clamp(red, 0, 255), clamp(green, 0, 255), clamp(blue, 0, 255)];
+}
+
+export function clamp(value: number, min: number, max: number): number {
+    return Math.min(Math.max(value, min), max);
 }

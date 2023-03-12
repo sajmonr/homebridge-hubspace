@@ -24,6 +24,13 @@
         "required": true,
         "description": "Your Hubspace password",
         "placeholder": "Password"
+      },
+      "dualColorSpace": {
+        "title": "Dual Color Space",
+        "type": "boolean",
+        "required": false,
+        "description": "Have RGB Lights enumerate a second light which supports the temperature color space.",
+        "placeholder": "false"
       }
     }
   }

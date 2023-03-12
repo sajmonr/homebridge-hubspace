@@ -40,12 +40,13 @@ export class DiscoveryService{
      */
     async discoverDevices() {
         const devices = await this.getDevicesForAccount();
+        const temperature_devices: Device[] = [];
 
         // loop over the discovered devices and register each one if it has not already been registered
         for (const device of devices) {
             // see if an accessory with the same uuid has already been registered and restored from
             // the cached devices we stored in the `configureAccessory` method above
-            const existingAccessory = this._cachedAccessories.find(accessory => accessory.UUID === device.uuid);
+            let existingAccessory = this._cachedAccessories.find(accessory => accessory.UUID === device.uuid);
 
             if (existingAccessory) {
                 // the accessory already exists
@@ -54,11 +55,41 @@ export class DiscoveryService{
             } else {
                 // the accessory does not yet exist, so we need to create it
                 this._platform.log.info('Adding new accessory:', device.name);
-                this.registerNewAccessory(device);
+                existingAccessory = this.registerNewAccessory(device);
+            }
+            createAccessoryForDevice(device, this._platform, existingAccessory);
+
+            // Special Case for RGB Lightbulbs which will create a second "virutal" lightbulb which is only in the Temperature Color Space
+            if (this._platform.config.dualColorSpace && device.functions.some(fc => fc === DeviceFunction.LightColor)) {
+                // Create duplicate device that will only support Temperature Color Space
+                const temperature_device = {...device}; // make a copy
+                temperature_device.name += ' Temperature';
+
+                // Add 1 to the last hex digit to the UUID, and wrap around
+                const lastChar = temperature_device.id.charAt(temperature_device.id.length - 1);
+                const newChar = (parseInt(lastChar, 16) + 1).toString(16);
+                temperature_device.id.slice(0, -1) + newChar;
+                temperature_device.uuid = this._platform.api.hap.uuid.generate(temperature_device.uuid.slice(0, -1) + newChar);
+
+                const existingTempAccessory = this._cachedAccessories.find(
+                    accessory => (accessory.UUID === temperature_device.uuid && accessory.displayName === temperature_device.name));
+                if (existingTempAccessory) {
+                    // the accessory already exists
+                    this._platform.log.info('Restoring existing accessory from cache:', existingTempAccessory.displayName);
+                    this.registerCachedAccessory(existingTempAccessory, temperature_device);
+                } else {
+                    // the accessory does not yet exist, so we need to create it
+                    this._platform.log.info('Adding new accessory:', temperature_device.name);
+                    existingAccessory = this.registerNewAccessory(temperature_device);
+                }
+                createAccessoryForDevice(temperature_device, this._platform, existingAccessory);
+
+                temperature_devices.push(temperature_device);
             }
         }
 
-        this.clearStaleAccessories(this._cachedAccessories.filter(a => !devices.some(d => d.uuid === a.UUID)));
+        const all_devices = devices.concat(temperature_devices);
+        this.clearStaleAccessories(this._cachedAccessories.filter(a => !all_devices.some(d => d.uuid === a.UUID)));
     }
 
     private clearStaleAccessories(staleAccessories: PlatformAccessory[]): void{
@@ -71,6 +102,7 @@ export class DiscoveryService{
 
             if(cacheIndex < 0) continue;
 
+            this._platform.log.info('Removing stale accessory:', accessory.displayName);
             this._cachedAccessories.splice(cacheIndex, 1);
         }
     }
@@ -78,18 +110,16 @@ export class DiscoveryService{
     private registerCachedAccessory(accessory: PlatformAccessory, device: Device): void{
         accessory.context.device = device;
         this._platform.api.updatePlatformAccessories([ accessory ]);
-
-        createAccessoryForDevice(device, this._platform, accessory);
     }
 
-    private registerNewAccessory(device: Device): void{
+    private registerNewAccessory(device: Device): PlatformAccessory{
         const accessory = new this._platform.api.platformAccessory(device.name, device.uuid);
 
         accessory.context.device = device;
 
-        createAccessoryForDevice(device, this._platform, accessory);
-
         this._platform.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+
+        return accessory;
     }
 
     private async getDevicesForAccount(): Promise<Device[]>{
@@ -113,6 +143,7 @@ export class DiscoveryService{
         if(!type) return undefined;
 
         return {
+            id: response.id,
             uuid: this._platform.api.hap.uuid.generate(response.id),
             deviceId: response.deviceId,
             name: response.friendlyName,

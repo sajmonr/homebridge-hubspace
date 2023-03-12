@@ -5,6 +5,8 @@ import { DeviceType } from './device-type';
  * Device definition
  */
 export interface Device{
+    /** Unique UUID within Hubspace */
+    id: string;
     /** Unique UUID within HomeKit */
     uuid: string;
     /** Hubspace device ID */

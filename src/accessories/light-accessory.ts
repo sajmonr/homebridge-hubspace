@@ -1,7 +1,7 @@
 import { CharacteristicValue, PlatformAccessory } from 'homebridge';
 import { HubspacePlatform } from '../platform';
 import { HubspaceAccessory } from './hubspace-accessory';
-import { isNullOrUndefined, normalizeValue, hexToRgb, rgbToHsv, hsvToRgb, rgbToHex } from '../utils';
+import { isNullOrUndefined, normalizeValue, hexToRgb, rgbToHsv, hsvToRgb, rgbToHex, rgbToMired, kelvinToRgb, clamp } from '../utils';
 import { DeviceFunction } from '../models/device-functions';
 
 /**
@@ -13,8 +13,9 @@ export class LightAccessory extends HubspaceAccessory{
      * Crates a new instance of the accessory
      * @param platform Hubspace platform
      * @param accessory Platform accessory
+     * @param rgbColorSpace The "Forced" Color Space of the Accessory
      */
-    constructor(platform: HubspacePlatform, accessory: PlatformAccessory) {
+    constructor(platform: HubspacePlatform, accessory: PlatformAccessory, rgbColorSpace: boolean) {
         super(platform, accessory, platform.Service.Lightbulb);
 
         this.configurePower();
@@ -22,7 +23,7 @@ export class LightAccessory extends HubspaceAccessory{
 
         // * If [Color Temperature] characteristic is included in the `Light Bulb`, `Hue` and `Saturation` must not be included as optional
         // * characteristics in `Light Bulb`. This characteristic must not be used for lamps which support color.
-        if(!this.configureColor()) {
+        if(!(rgbColorSpace && this.configureColor())) {
             this.configureTemperature();
         }
     }
@@ -85,13 +86,7 @@ export class LightAccessory extends HubspaceAccessory{
     private async getBrightness(): Promise<CharacteristicValue>{
         // Try to get the value
         const value = await this.deviceService.getValueAsInteger(this.device.deviceId, DeviceFunction.Brightness);
-
-        // TODO: understand what undefined would look like for this??
-        // If the value is not defined then show 'Not Responding'
-        if(isNullOrUndefined(value) || value === -1){
-            this.log.error(`${this.device.name}: Received Comm Failure for get Brightness`);
-            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-        }
+        this.throwErrorIfNullOrUndefinedInt(value, 'Received Comm Failure for get Brightness');
 
         this.log.debug(`${this.device.name}: Received ${value} from Hubspace Brightness`);
 
@@ -100,29 +95,34 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async setBrightness(value: CharacteristicValue): Promise<void>{
-        // TODO: handle the 0 brightness value as off
         this.log.debug(`${this.device.name}: Received ${value} from Homekit Brightness`);
         this.deviceService.setValue(this.device.deviceId, DeviceFunction.Brightness, value);
     }
 
     private async getTemperature(): Promise<CharacteristicValue>{
-        this.setColorMode(0);
+        const colorMode = await this.deviceService.getValueAsBoolean(this.device.deviceId, DeviceFunction.ColorMode);
+        this.throwErrorIfNullOrUndefined(colorMode, 'Received Comm Failure for get Temperature');
 
-        // Try to get the value
-        const kelvin = await this.deviceService.getValueAsInteger(this.device.deviceId, DeviceFunction.LightTemperature);
+        // Lightbulb is currently in the Temperature Color Space
+        if(colorMode === false) {
+            // Try to get the value
+            const kelvin = await this.deviceService.getValueAsInteger(this.device.deviceId, DeviceFunction.LightTemperature);
+            this.throwErrorIfNullOrUndefinedInt(kelvin, 'Received Comm Failure for get Temperature');
 
-        // TODO: understand what undefined would look like for this??
-        // If the value is not defined then show 'Not Responding'
-        if(isNullOrUndefined(kelvin) || kelvin === -1){
-            this.log.error(`${this.device.name}: Received Comm Failure for get Temperature`);
-            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+            const value = normalizeValue(kelvin as number, 6500, 2200, 140, 500, 1);
+            this.log.debug(`${this.device.name}: Received ${kelvin} from Hubspace Color Temperature, sending ${value} to Homebridge`);
+
+            // Otherwise return the value
+            return value!;
         }
+        // Lightbulb is currently in the RGB Color Space
+        else {
+            const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
+            this.throwErrorIfNullOrUndefined(rgb, 'Received Comm Failure for get Temperature');
 
-        const value = normalizeValue(kelvin as number, 6500, 2200, 140, 500, 1);
-        this.log.debug(`${this.device.name}: Received ${kelvin} from Hubspace Color Temperature, sending ${value} to Homebridge`);
-
-        // Otherwise return the value
-        return value!;
+            //return clamp(rgbToMired(hexToRgb(rgb as string)), 140, 500);
+            return 140;
+        }
     }
 
     private async setTemperature(value: CharacteristicValue): Promise<void>{
@@ -145,20 +145,29 @@ export class LightAccessory extends HubspaceAccessory{
     private saturation : CharacteristicValue = -1;
 
     private async getHue(): Promise<CharacteristicValue>{
-        this.setColorMode(1);
+        const colorMode = await this.deviceService.getValueAsBoolean(this.device.deviceId, DeviceFunction.ColorMode);
+        this.throwErrorIfNullOrUndefined(colorMode, 'Received Comm Failure for get Hue');
 
-        // Try to get the value
-        const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
-        // If the value is not defined then show 'Not Responding'
-        if(isNullOrUndefined(rgb) || rgb === -1){
-            this.log.error(`${this.device.name}: Received Comm Failure for get Hue`);
-            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        let r, g, b;
+        // Lightbulb is currently in the RGB Color Space
+        if(colorMode === true) {
+            // Try to get the value
+            const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
+            this.throwErrorIfNullOrUndefinedInt(rgb, 'Received Comm Failure for get Hue');
+
+            [r, g, b] = hexToRgb(rgb as string);
+        }
+        // Lightbulb is currently in the Temperature Color Space
+        else {
+            const kelvin = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightTemperature);
+            this.throwErrorIfNullOrUndefinedInt(kelvin, 'Received Comm Failure for get Temperature');
+
+            [r, g, b] = kelvinToRgb(kelvin as number);
         }
 
-        const [r, g, b] = hexToRgb(rgb as string);
+
         const [h, s, v] = rgbToHsv(r, g, b);
-        this.log.debug(
-            `${this.device.name}: Received ${rgb} from Hubspace Color RGB, sending ${h} to Homebridge for Hue`);
+        this.log.debug(`sending ${h} to Homebridge for Hue`);
 
         // Otherwise return the value
         return (h as CharacteristicValue)!;
@@ -197,19 +206,28 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async getSaturation(): Promise<CharacteristicValue>{
-        this.setColorMode(1);
-        // Try to get the value
-        const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
-        // If the value is not defined then show 'Not Responding'
-        if(isNullOrUndefined(rgb) || rgb === -1){
-            this.log.error(`${this.device.name}: Received Comm Failure for get Saturation`);
-            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        const colorMode = await this.deviceService.getValueAsBoolean(this.device.deviceId, DeviceFunction.ColorMode);
+        this.throwErrorIfNullOrUndefined(colorMode, 'Received Comm Failure for get Hue');
+
+        let r, g, b;
+        // Lightbulb is currently in the RGB Color Space
+        if(colorMode === true) {
+            // Try to get the value
+            const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
+            this.throwErrorIfNullOrUndefinedInt(rgb, 'Received Comm Failure for get Hue');
+
+            [r, g, b] = hexToRgb(rgb as string);
+        }
+        // Lightbulb is currently in the Temperature Color Space
+        else {
+            const kelvin = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightTemperature);
+            this.throwErrorIfNullOrUndefinedInt(kelvin, 'Received Comm Failure for get Temperature');
+
+            [r, g, b] = kelvinToRgb(kelvin as number);
         }
 
-        const [r, g, b] = hexToRgb(rgb as string);
         const [h, s, v] = rgbToHsv(r, g, b);
-        this.log.debug(
-            `${this.device.name}: Received ${rgb} from Hubspace Color RGB, sending ${s} to Homebridge for Saturation`);
+        this.log.debug(`sending ${s} to Homebridge for Saturation`);
 
         // Otherwise return the value
         return (s as CharacteristicValue)!;
@@ -251,5 +269,21 @@ export class LightAccessory extends HubspaceAccessory{
         // Color Temperature Mode. It is possible for a user to change it back in to Color Temperature Mode using the Hubspace app
         // but homekit should only be working in color RGB mode if the lightbulb supports color.
         this.deviceService.setValue(this.device.deviceId, DeviceFunction.ColorMode, value);
+    }
+
+    private throwErrorIfNullOrUndefined(value: any, message: string): void {
+        // If the value is not defined then show 'Not Responding'
+        if (isNullOrUndefined(value)) {
+            this.log.error(`${this.device.name}: ${message}`);
+            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        }
+    }
+
+    private throwErrorIfNullOrUndefinedInt(value: any, message: string): void {
+        // If the value is not defined then show 'Not Responding'
+        if (isNullOrUndefined(value) || value === -1) {
+            this.log.error(`${this.device.name}: ${message}`);
+            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        }
     }
 }
