@@ -106,6 +106,8 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async getTemperature(): Promise<CharacteristicValue>{
+        this.setColorMode(0);
+
         // Try to get the value
         const kelvin = await this.deviceService.getValueAsInteger(this.device.deviceId, DeviceFunction.LightTemperature);
 
@@ -124,6 +126,8 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async setTemperature(value: CharacteristicValue): Promise<void>{
+        this.setColorMode(0);
+
         // HomeKit Sends values with a min of 140 and a max of 500 with a step of 1
         // and Hubbridge expects values of a different scale such as 2200K to 6500K
         // with a step of 100
@@ -141,17 +145,15 @@ export class LightAccessory extends HubspaceAccessory{
     private saturation : CharacteristicValue = -1;
 
     private async getHue(): Promise<CharacteristicValue>{
-        this.setColorMode();
+        this.setColorMode(1);
 
         // Try to get the value
         const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
-
-        // TODO: understand what undefined would look like for this??
         // If the value is not defined then show 'Not Responding'
-        // if(isNullOrUndefined(rgb) || rgb === -1){
-        //     this.log.error(`${this.device.name}: Received Comm Failure for get Hue`);
-        //     throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
-        // }
+        if(isNullOrUndefined(rgb) || rgb === -1){
+            this.log.error(`${this.device.name}: Received Comm Failure for get Hue`);
+            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        }
 
         const [r, g, b] = hexToRgb(rgb as string);
         const [h, s, v] = rgbToHsv(r, g, b);
@@ -163,7 +165,7 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async setHue(value: CharacteristicValue): Promise<void>{
-        this.setColorMode();
+        this.setColorMode(1);
 
         // Both values are unknown, so set Hue and expect Saturation to send it over once that is received
         if (this.hue === -1 && this.saturation === -1) {
@@ -195,7 +197,7 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async getSaturation(): Promise<CharacteristicValue>{
-        this.setColorMode();
+        this.setColorMode(1);
         // Try to get the value
         const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
         // If the value is not defined then show 'Not Responding'
@@ -214,7 +216,7 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async setSaturation(value: CharacteristicValue): Promise<void>{
-        this.setColorMode();
+        this.setColorMode(1);
 
         // Both values are unknown, so set Saturation and expect Hue to send it over once that is received
         if (this.hue === -1 && this.saturation === -1) {
@@ -244,10 +246,10 @@ export class LightAccessory extends HubspaceAccessory{
         }
     }
 
-    private setColorMode(): void{
+    private setColorMode(value: number): void{
         // Color Mode is a boolean value used to switch between temperature and color modes, 1 is for Color RGB Mode and 0 is for
         // Color Temperature Mode. It is possible for a user to change it back in to Color Temperature Mode using the Hubspace app
         // but homekit should only be working in color RGB mode if the lightbulb supports color.
-        this.deviceService.setValue(this.device.deviceId, DeviceFunction.ColorMode, 1);
+        this.deviceService.setValue(this.device.deviceId, DeviceFunction.ColorMode, value);
     }
 }
