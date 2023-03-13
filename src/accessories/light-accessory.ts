@@ -167,10 +167,10 @@ export class LightAccessory extends HubspaceAccessory{
 
 
         const [h, s, v] = rgbToHsv(r, g, b);
-        this.log.debug(`sending ${h} to Homebridge for Hue`);
+        this.log.debug(`sending ${Math.round(h)} to Homebridge for Hue`);
 
         // Otherwise return the value
-        return (h as CharacteristicValue)!;
+        return (Math.round(h) as CharacteristicValue)!;
     }
 
     private async setHue(value: CharacteristicValue): Promise<void>{
@@ -227,10 +227,10 @@ export class LightAccessory extends HubspaceAccessory{
         }
 
         const [h, s, v] = rgbToHsv(r, g, b);
-        this.log.debug(`sending ${s} to Homebridge for Saturation`);
+        this.log.debug(`sending ${Math.round(s)} to Homebridge for Saturation`);
 
         // Otherwise return the value
-        return (s as CharacteristicValue)!;
+        return (Math.round(s) as CharacteristicValue)!;
     }
 
     private async setSaturation(value: CharacteristicValue): Promise<void>{
