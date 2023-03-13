@@ -188,7 +188,8 @@ export class LightAccessory extends HubspaceAccessory{
 
             this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
         } else {
-            this.log.error(`${this.device.name}: Received ${value} from Homekit Hue, but cannot send without a Saturation value`);
+            this.hue = value;
+            this.log.warn(`${this.device.name}: Received another ${value} from Homekit Hue, but cannot send without a Saturation value`);
         }
 
     }
@@ -238,7 +239,8 @@ export class LightAccessory extends HubspaceAccessory{
 
             this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
         } else {
-            this.log.error(`${this.device.name}: Received ${value} from Homekit Saturation, but cannot send without a Hue value`);
+            this.saturation = value;
+            this.log.warn(`${this.device.name}: Received another ${value} from Homekit Saturation, but cannot send without a Hue value`);
         }
     }
 
