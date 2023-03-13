@@ -120,8 +120,12 @@ export class LightAccessory extends HubspaceAccessory{
             const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
             this.throwErrorIfNullOrUndefined(rgb, 'Received Comm Failure for get Temperature');
 
-            //return clamp(rgbToMired(hexToRgb(rgb as string)), 140, 500);
-            return 140;
+            const mired = clamp(rgbToMired(hexToRgb(rgb as string)), 140, 500);
+            this.log.debug(
+                `${this.device.name}: Received ${rgb} from Hubspace Color Temperature, sending ${Math.round(mired)} to Homebridge`);
+
+            // Try to give it something reasonable to display
+            return Math.round(mired);
         }
     }
 
@@ -167,7 +171,7 @@ export class LightAccessory extends HubspaceAccessory{
 
 
         const [h, s, v] = rgbToHsv(r, g, b);
-        this.log.debug(`sending ${Math.round(h)} to Homebridge for Hue`);
+        this.log.debug(`${this.device.name}: sending ${Math.round(h)} to Homebridge for Hue`);
 
         // Otherwise return the value
         return (Math.round(h) as CharacteristicValue)!;
@@ -227,7 +231,7 @@ export class LightAccessory extends HubspaceAccessory{
         }
 
         const [h, s, v] = rgbToHsv(r, g, b);
-        this.log.debug(`sending ${Math.round(s)} to Homebridge for Saturation`);
+        this.log.debug(`${this.device.name}: sending ${Math.round(s)} to Homebridge for Saturation`);
 
         // Otherwise return the value
         return (Math.round(s) as CharacteristicValue)!;

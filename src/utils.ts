@@ -135,17 +135,28 @@ export function rgbToHsv(r: number, g: number, b: number): [number, number, numb
 }
 
 export function rgbToMired(rgb: [number, number, number]): number {
-    // Convert RGB color to CIE 1931 XYZ color space
-    const xyz = ColorConverter.rgb.xyz(rgb);
+    const r = rgb[0];
+    const g = rgb[1];
+    const b = rgb[2];
 
-    // Convert CIE 1931 XYZ color to CIE 1931 (x, y) chromaticity coordinates
-    const [x, y] = ColorConverter.xyz.xy(xyz);
+    // Normalize RGB values
+    const rNorm = r / 255;
+    const gNorm = g / 255;
+    const bNorm = b / 255;
 
-    // Convert (x, y) chromaticity coordinates to Mired
-    const colorTemperature = 1 / ((0.23881 * x) + (0.25499 * y) - 0.58291);
-    const mired = Math.round(1000000 / colorTemperature);
+    // Calculate the chromaticity coordinates
+    const x = 0.4124 * rNorm + 0.3576 * gNorm + 0.1805 * bNorm;
+    const y = 0.2126 * rNorm + 0.7152 * gNorm + 0.0722 * bNorm;
+    const z = 0.0193 * rNorm + 0.1192 * gNorm + 0.9505 * bNorm;
 
-    return mired;
+    // Calculate the color temperature using the McCamy formula
+    const n = (x - 0.332) / (0.1858 - y);
+    const colorTemperature = (437 * Math.pow(n, 3)) + (3601 * Math.pow(n, 2)) + (6831 * n) + 5517;
+
+    // Convert color temperature to mireds
+    const mireds = 1000000 / colorTemperature;
+
+    return mireds;
 }
 
 export function kelvinToRgb(kelvin: number): [number, number, number] {

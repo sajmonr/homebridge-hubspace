@@ -71,7 +71,7 @@ export class DiscoveryService{
                 temperature_device.id.slice(0, -1) + newChar;
                 temperature_device.uuid = this._platform.api.hap.uuid.generate(temperature_device.uuid.slice(0, -1) + newChar);
 
-                const existingTempAccessory = this._cachedAccessories.find(
+                let existingTempAccessory = this._cachedAccessories.find(
                     accessory => (accessory.UUID === temperature_device.uuid && accessory.displayName === temperature_device.name));
                 if (existingTempAccessory) {
                     // the accessory already exists
@@ -80,9 +80,9 @@ export class DiscoveryService{
                 } else {
                     // the accessory does not yet exist, so we need to create it
                     this._platform.log.info('Adding new accessory:', temperature_device.name);
-                    existingAccessory = this.registerNewAccessory(temperature_device);
+                    existingTempAccessory = this.registerNewAccessory(temperature_device);
                 }
-                createAccessoryForDevice(temperature_device, this._platform, existingAccessory);
+                createAccessoryForDevice(temperature_device, this._platform, existingTempAccessory);
 
                 temperature_devices.push(temperature_device);
             }
