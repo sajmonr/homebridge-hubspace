@@ -2,7 +2,7 @@ import { CharacteristicValue, PlatformAccessory } from 'homebridge';
 import { HubspacePlatform } from '../platform';
 import { HubspaceAccessory } from './hubspace-accessory';
 import { isNullOrUndefined, normalizeValue, hexToRgb, rgbToHsv, hsvToRgb, rgbToHex, rgbToMired, kelvinToRgb, clamp } from '../utils';
-import { DeviceFunction } from '../models/device-functions';
+import { DeviceFunction, getDeviceFunctionDef } from '../models/device-functions';
 
 /**
  * Light accessory for Hubspace platform
@@ -65,7 +65,8 @@ export class LightAccessory extends HubspaceAccessory{
 
     private async getOn(): Promise<CharacteristicValue>{
         // Try to get the value
-        const value = await this.deviceService.getValueAsBoolean(this.device.deviceId, DeviceFunction.LightPower);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightPower);
+        const value = await this.deviceService.getValueAsBoolean(this.device.deviceId, func.values[0].deviceValues[0].key);
 
         // If the value is not defined then show 'Not Responding'
         if(isNullOrUndefined(value)){
@@ -80,12 +81,14 @@ export class LightAccessory extends HubspaceAccessory{
 
     private async setOn(value: CharacteristicValue): Promise<void>{
         this.log.debug(`${this.device.name}: Received ${value} from Homekit Power`);
-        await this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightPower, value);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightPower);
+        await this.deviceService.setValue(this.device.deviceId, func.values[0].deviceValues[0].key, value);
     }
 
     private async getBrightness(): Promise<CharacteristicValue>{
         // Try to get the value
-        const value = await this.deviceService.getValueAsInteger(this.device.deviceId, DeviceFunction.Brightness);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.Brightness);
+        const value = await this.deviceService.getValueAsInteger(this.device.deviceId, func.values[0].deviceValues[0].key);
         this.throwErrorIfNullOrUndefinedInt(value, 'Received Comm Failure for get Brightness');
 
         this.log.debug(`${this.device.name}: Received ${value} from Hubspace Brightness`);
@@ -96,17 +99,20 @@ export class LightAccessory extends HubspaceAccessory{
 
     private async setBrightness(value: CharacteristicValue): Promise<void>{
         this.log.debug(`${this.device.name}: Received ${value} from Homekit Brightness`);
-        this.deviceService.setValue(this.device.deviceId, DeviceFunction.Brightness, value);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.Brightness);
+        await this.deviceService.setValue(this.device.deviceId, func.values[0].deviceValues[0].key, value);
     }
 
     private async getTemperature(): Promise<CharacteristicValue>{
-        const colorMode = await this.deviceService.getValueAsBoolean(this.device.deviceId, DeviceFunction.ColorMode);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.ColorMode);
+        const colorMode = await this.deviceService.getValueAsBoolean(this.device.deviceId, func.values[0].deviceValues[0].key);
         this.throwErrorIfNullOrUndefined(colorMode, 'Received Comm Failure for get Temperature');
 
         // Lightbulb is currently in the Temperature Color Space
         if(colorMode === false) {
             // Try to get the value
-            const kelvin = await this.deviceService.getValueAsInteger(this.device.deviceId, DeviceFunction.LightTemperature);
+            const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightTemperature);
+            const kelvin = await this.deviceService.getValueAsInteger(this.device.deviceId, func.values[0].deviceValues[0].key);
             this.throwErrorIfNullOrUndefinedInt(kelvin, 'Received Comm Failure for get Temperature');
 
             const value = normalizeValue(kelvin as number, 6500, 2200, 140, 500, 1);
@@ -117,7 +123,8 @@ export class LightAccessory extends HubspaceAccessory{
         }
         // Lightbulb is currently in the RGB Color Space
         else {
-            const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
+            const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightColor);
+            const rgb = await this.deviceService.getValue(this.device.deviceId, func.values[0].deviceValues[0].key);
             this.throwErrorIfNullOrUndefined(rgb, 'Received Comm Failure for get Temperature');
 
             const mired = clamp(rgbToMired(hexToRgb(rgb as string)), 140, 500);
@@ -137,7 +144,8 @@ export class LightAccessory extends HubspaceAccessory{
         // with a step of 100
         const kelvin = normalizeValue(value as number, 140, 500, 6500, 2200, 100);
         this.log.debug(`${this.device.name}: Received ${value} from Homekit Color Temperature, sending ${kelvin}K to Hubridge`);
-        this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightTemperature, kelvin);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightTemperature);
+        this.deviceService.setValue(this.device.deviceId, func.values[0].deviceValues[0].key, kelvin);
     }
 
     /**
@@ -149,21 +157,24 @@ export class LightAccessory extends HubspaceAccessory{
     private saturation : CharacteristicValue = -1;
 
     private async getHue(): Promise<CharacteristicValue>{
-        const colorMode = await this.deviceService.getValueAsBoolean(this.device.deviceId, DeviceFunction.ColorMode);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.ColorMode);
+        const colorMode = await this.deviceService.getValueAsBoolean(this.device.deviceId, func.values[0].deviceValues[0].key);
         this.throwErrorIfNullOrUndefined(colorMode, 'Received Comm Failure for get Hue');
 
         let r, g, b;
         // Lightbulb is currently in the RGB Color Space
         if(colorMode === true) {
             // Try to get the value
-            const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
+            const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightColor);
+            const rgb = await this.deviceService.getValue(this.device.deviceId, func.values[0].deviceValues[0].key);
             this.throwErrorIfNullOrUndefinedInt(rgb, 'Received Comm Failure for get Hue');
 
             [r, g, b] = hexToRgb(rgb as string);
         }
         // Lightbulb is currently in the Temperature Color Space
         else {
-            const kelvin = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightTemperature);
+            const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightTemperature);
+            const kelvin = await this.deviceService.getValue(this.device.deviceId, func.values[0].deviceValues[0].key);
             this.throwErrorIfNullOrUndefinedInt(kelvin, 'Received Comm Failure for get Temperature');
 
             [r, g, b] = kelvinToRgb(kelvin as number);
@@ -201,7 +212,8 @@ export class LightAccessory extends HubspaceAccessory{
             this.log.debug(
                 `${this.device.name}: Received ${value} from Homekit Hue, sending ${hexRgb} from to Hubspace Color RGB`);
 
-            this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
+            const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightColor);
+            this.deviceService.setValue(this.device.deviceId, func.values[0].deviceValues[0].key, hexRgb);
         } else {
             this.hue = value;
             this.log.warn(`${this.device.name}: Received another ${value} from Homekit Hue, but cannot send without a Saturation value`);
@@ -210,21 +222,24 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async getSaturation(): Promise<CharacteristicValue>{
-        const colorMode = await this.deviceService.getValueAsBoolean(this.device.deviceId, DeviceFunction.ColorMode);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.ColorMode);
+        const colorMode = await this.deviceService.getValueAsBoolean(this.device.deviceId, func.values[0].deviceValues[0].key);
         this.throwErrorIfNullOrUndefined(colorMode, 'Received Comm Failure for get Hue');
 
         let r, g, b;
         // Lightbulb is currently in the RGB Color Space
         if(colorMode === true) {
             // Try to get the value
-            const rgb = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightColor);
+            const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightColor);
+            const rgb = await this.deviceService.getValue(this.device.deviceId, func.values[0].deviceValues[0].key);
             this.throwErrorIfNullOrUndefinedInt(rgb, 'Received Comm Failure for get Hue');
 
             [r, g, b] = hexToRgb(rgb as string);
         }
         // Lightbulb is currently in the Temperature Color Space
         else {
-            const kelvin = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.LightTemperature);
+            const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightTemperature);
+            const kelvin = await this.deviceService.getValue(this.device.deviceId, func.values[0].deviceValues[0].key);
             this.throwErrorIfNullOrUndefinedInt(kelvin, 'Received Comm Failure for get Temperature');
 
             [r, g, b] = kelvinToRgb(kelvin as number);
@@ -261,7 +276,8 @@ export class LightAccessory extends HubspaceAccessory{
             this.log.debug(
                 `${this.device.name}: Received ${value} from Homekit Saturation, sending ${hexRgb} from to Hubspace Color RGB`);
 
-            this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightColor, hexRgb);
+            const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightColor);
+            this.deviceService.setValue(this.device.deviceId, func.values[0].deviceValues[0].key, hexRgb);
         } else {
             this.saturation = value;
             this.log.warn(`${this.device.name}: Received another ${value} from Homekit Saturation, but cannot send without a Hue value`);
@@ -272,7 +288,8 @@ export class LightAccessory extends HubspaceAccessory{
         // Color Mode is a boolean value used to switch between temperature and color modes, 1 is for Color RGB Mode and 0 is for
         // Color Temperature Mode. It is possible for a user to change it back in to Color Temperature Mode using the Hubspace app
         // but homekit should only be working in color RGB mode if the lightbulb supports color.
-        this.deviceService.setValue(this.device.deviceId, DeviceFunction.ColorMode, value);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.ColorMode);
+        this.deviceService.setValue(this.device.deviceId, func.values[0].deviceValues[0].key, value);
     }
 
     private throwErrorIfNullOrUndefined(value: any, message: string): void {

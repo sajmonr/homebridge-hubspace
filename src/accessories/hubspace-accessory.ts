@@ -59,7 +59,7 @@ export abstract class HubspaceAccessory{
      * @returns True if function is supported by the device otherwise false
      */
     protected supportsFunction(deviceFunction: DeviceFunction): boolean{
-        return this.device.functions.some(fc => fc === deviceFunction);
+        return this.device.functions.some(fc => fc.functionClass === deviceFunction);
     }
 
 }

@@ -60,7 +60,7 @@ export class DiscoveryService{
             createAccessoryForDevice(device, this._platform, existingAccessory);
 
             // Special Case for RGB Lightbulbs which will create a second "virutal" lightbulb which is only in the Temperature Color Space
-            if (this._platform.config.dualColorSpace && device.functions.some(fc => fc === DeviceFunction.LightColor)) {
+            if (this._platform.config.dualColorSpace && device.functions.some(fc => fc.functionClass === DeviceFunction.LightColor)) {
                 // Create duplicate device that will only support Temperature Color Space
                 const temperature_device = {...device}; // make a copy
                 temperature_device.name += ' Temperature';
@@ -150,18 +150,17 @@ export class DiscoveryService{
             type: type,
             manufacturer: response.description.device.manufacturerName,
             model: response.description.device.model.split(',').map(m => m.trim()),
-            functions: this.getFunctionsFromResponse(response.description.functions)
+            functions: this.getSupportedFunctionsFromResponse(response.description.functions)
         };
     }
 
-    private getFunctionsFromResponse(supportedFunctions: DeviceFunctionResponse[]): DeviceFunction[]{
-        const output: DeviceFunction[] = [];
+    private getSupportedFunctionsFromResponse(supportedFunctions: DeviceFunctionResponse[]): DeviceFunctionResponse[]{
+        const output: DeviceFunctionResponse[] = [];
 
-        for(const fc of supportedFunctions){
-            // Get the type for the function
-            const type = DeviceFunctions
-                .find(df => df.functionInstanceName === fc.functionInstance && df.functionClass === fc.functionClass)
-                ?.type;
+        for(const df of DeviceFunctions){
+            // Collected only supported Device Functions
+            const type = supportedFunctions
+                .find(fc => df.functionInstanceName === fc.functionInstance && df.functionClass === fc.functionClass);
 
             if(type === undefined || output.indexOf(type) >= 0) continue;
 

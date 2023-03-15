@@ -2,7 +2,7 @@ import { CharacteristicValue, PlatformAccessory } from 'homebridge';
 import { HubspacePlatform } from '../platform';
 import { HubspaceAccessory } from './hubspace-accessory';
 import { isNullOrUndefined } from '../utils';
-import { DeviceFunction } from '../models/device-functions';
+import { DeviceFunction, getDeviceFunctionDef } from '../models/device-functions';
 
 /**
  * Fan accessory for Hubspace platform
@@ -39,12 +39,14 @@ export class FanAccessory extends HubspaceAccessory{
     }
 
     private async setActive(value: CharacteristicValue): Promise<void>{
-        this.deviceService.setValue(this.device.deviceId, DeviceFunction.FanPower, value);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.FanPower);
+        await this.deviceService.setValue(this.device.deviceId, func.values[0].deviceValues[0].key, value);
     }
 
     private async getActive(): Promise<CharacteristicValue>{
         // Try to get the value
-        const value = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.FanPower);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.FanPower);
+        const value = await this.deviceService.getValue(this.device.deviceId, func.values[0].deviceValues[0].key);
 
         // If the value is not defined then show 'Not Responding'
         if(isNullOrUndefined(value)){
@@ -57,7 +59,8 @@ export class FanAccessory extends HubspaceAccessory{
 
     private async getRotationSpeed(): Promise<CharacteristicValue>{
         // Try to get the value
-        const value = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.FanSpeed);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.FanSpeed);
+        const value = await this.deviceService.getValue(this.device.deviceId, func.values[0].deviceValues[0].key);
 
         // If the value is not defined then show 'Not Responding'
         if(isNullOrUndefined(value)){
@@ -69,7 +72,8 @@ export class FanAccessory extends HubspaceAccessory{
     }
 
     private async setRotationSpeed(value: CharacteristicValue): Promise<void>{
-        await this.deviceService.setValue(this.device.deviceId, DeviceFunction.FanSpeed, value);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.FanSpeed);
+        await this.deviceService.setValue(this.device.deviceId, func.values[0].deviceValues[0].key, value);
     }
 
 }

@@ -1,4 +1,4 @@
-import { DeviceFunction } from './device-functions';
+import { DeviceFunctionResponse } from '../responses/device-function-response';
 import { DeviceType } from './device-type';
 
 /**
@@ -20,5 +20,5 @@ export interface Device{
     /** Device model */
     model: string[];
     /** Supported device functions */
-    functions: DeviceFunction[];
+    functions: DeviceFunctionResponse[];
 }

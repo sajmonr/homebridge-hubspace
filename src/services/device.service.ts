@@ -26,14 +26,13 @@ export class DeviceService{
      * @param deviceFunction Function to set value for
      * @param value Value to set to attribute
      */
-    async setValue(deviceId: string, deviceFunction: DeviceFunction, value: CharacteristicValue): Promise<void>{
-        const functionDef = getDeviceFunctionDef(deviceFunction);
+    async setValue(deviceId: string, attributeId: string, value: CharacteristicValue): Promise<void>{
         let response: AxiosResponse;
 
         try{
             response = await this._httpClient.post(`accounts/${this._platform.accountService.accountId}/devices/${deviceId}/actions`, {
                 type: 'attribute_write',
-                attrId: functionDef.attributeId,
+                attrId: attributeId,
                 data: this.getDataValue(value)
             });
         }catch(ex){
@@ -53,8 +52,7 @@ export class DeviceService{
      * @param deviceFunction Function to get value for
      * @returns Data value
      */
-    async getValue(deviceId: string, deviceFunction: DeviceFunction): Promise<CharacteristicValue | undefined>{
-        const functionDef = getDeviceFunctionDef(deviceFunction);
+    async getValue(deviceId: string, attributeId: string): Promise<CharacteristicValue | undefined>{
         let deviceStatus: DeviceStatusResponse;
 
         try{
@@ -68,10 +66,10 @@ export class DeviceService{
             return undefined;
         }
 
-        const attributeResponse = deviceStatus.attributes.find(a => a.id === functionDef.attributeId);
+        const attributeResponse = deviceStatus.attributes.find(a => a.id.toString() === attributeId);
 
         if(!attributeResponse){
-            this._platform.log.error(`Failed to find value for ${functionDef.functionInstanceName} for device (device ID: ${deviceId})`);
+            this._platform.log.error(`Failed to find value for ${attributeId} for device (device ID: ${deviceId})`);
             return undefined;
         }
 
@@ -84,8 +82,8 @@ export class DeviceService{
      * @param deviceFunction Function to get value for
      * @returns Boolean value
      */
-    async getValueAsBoolean(deviceId: string, deviceFunction: DeviceFunction): Promise<boolean | undefined>{
-        const value = await this.getValue(deviceId, deviceFunction);
+    async getValueAsBoolean(deviceId: string, attributeId: string): Promise<boolean | undefined>{
+        const value = await this.getValue(deviceId, attributeId);
 
         if(!value) return undefined;
 
@@ -98,8 +96,8 @@ export class DeviceService{
      * @param deviceFunction Function to get value for
      * @returns Integer value
      */
-    async getValueAsInteger(deviceId: string, deviceFunction: DeviceFunction): Promise<number | undefined>{
-        const value = await this.getValue(deviceId, deviceFunction);
+    async getValueAsInteger(deviceId: string, attributeId): Promise<number | undefined>{
+        const value = await this.getValue(deviceId, attributeId);
 
         if(!value || typeof value !== 'string') return undefined;
 

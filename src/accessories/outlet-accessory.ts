@@ -1,5 +1,5 @@
 import { CharacteristicValue, PlatformAccessory } from 'homebridge';
-import { DeviceFunction } from '../models/device-functions';
+import { DeviceFunction, getDeviceFunctionDef } from '../models/device-functions';
 import { HubspacePlatform } from '../platform';
 import { isNullOrUndefined } from '../utils';
 import { HubspaceAccessory } from './hubspace-accessory';
@@ -27,7 +27,8 @@ export class OutletAccessory extends HubspaceAccessory{
 
     private async getOn(): Promise<CharacteristicValue>{
         // Try to get the value
-        const value = await this.deviceService.getValueAsBoolean(this.device.deviceId, DeviceFunction.OutletPower);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.OutletPower);
+        const value = await this.deviceService.getValueAsBoolean(this.device.deviceId, func.values[0].deviceValues[0].key);
 
         // If the value is not defined then show 'Not Responding'
         if(isNullOrUndefined(value)){
@@ -39,7 +40,8 @@ export class OutletAccessory extends HubspaceAccessory{
     }
 
     private async setOn(value: CharacteristicValue): Promise<void>{
-        await this.deviceService.setValue(this.device.deviceId, DeviceFunction.OutletPower, value);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.OutletPower);
+        await this.deviceService.setValue(this.device.deviceId, func.values[0].deviceValues[0].key, value);
     }
 
 }
