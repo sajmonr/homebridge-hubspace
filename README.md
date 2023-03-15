@@ -31,6 +31,8 @@ Not all features for all products are implemented. Please see the functions belo
 | --- | --- |
 | [Universal Smart Wi-Fi 4-Speed Ceiling Fan](https://www.homedepot.com/p/Hampton-Bay-Universal-Smart-Wi-Fi-4-Speed-Ceiling-Fan-White-Remote-Control-For-Use-Only-With-AC-Motor-Fans-Powered-by-Hubspace-76278/315169181?) | <ul><li>Light on/off</li><li>Fan on/off</li><li>Light brightness</li><li>Fan speed</li></ul> |
 | [Defiant Smart Plug](https://www.homedepot.com/p/Defiant-15-Amp-120-Volt-Smart-Wi-Fi-Bluetooth-Plug-with-1-Outlet-Powered-by-Hubspace-HPPA11AWB/315636834) | <ul><li>Power on/off</li></ul> |
+| [ BR30 Color CCT Light](https://www.homedepot.com/p/EcoSmart-65-Watt-Equivalent-Smart-BR30-Color-Changing-CEC-LED-Light-Bulb-with-Voice-Control-1-Bulb-Powered-by-Hubspace-11BR3065WRGBWH1/318411936) | <ul><li>Power on/off</li><li>Light brightness</li><li>Light color</li><li>Light temperature</li></ul> |
+| [A19 Color CCT Light](https://www.homedepot.com/p/EcoSmart-60-Watt-Equivalent-Smart-A19-Color-Changing-CEC-LED-Light-Bulb-with-Voice-Control-1-Bulb-Powered-by-Hubspace-11A19060WRGBWH1/318411935) | <ul><li>Power on/off</li><li>Light brightness</li><li>Light color</li><li>Light temperature</li></ul> |
 
 # Development
 There is no official documentation for Hubspace products. Under the hood they use Afero cloud as the mechanism that controls the products. Any functionality here is gained by experimenting with various functions of the devices. Afero provides simple explanation of [their APIs](https://developer.afero.io/API-DeviceEndpoints), however, this is in no way comprehensive.
