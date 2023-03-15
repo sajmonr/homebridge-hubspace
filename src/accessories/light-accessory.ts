@@ -98,9 +98,15 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async setBrightness(value: CharacteristicValue): Promise<void>{
-        this.log.debug(`${this.device.name}: Received ${value} from Homekit Brightness`);
-        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.Brightness);
-        await this.deviceService.setValue(this.device.deviceId, func.values[0].deviceValues[0].key, value);
+        // Homekit can send a 0 value for brightness when sliding to off, which is not valid for Hubspace
+        if (value === 0) {
+            // TODO: should be call power off?
+            this.log.debug(`${this.device.name}: Received 0 from Homekit Brightness, ignoring as 0 is not valid for Hubspace`);
+        } else {
+            this.log.debug(`${this.device.name}: Received ${value} from Homekit Brightness`);
+            const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.Brightness);
+            await this.deviceService.setValue(this.device.deviceId, func.values[0].deviceValues[0].key, value);
+        }
     }
 
     private async getTemperature(): Promise<CharacteristicValue>{
