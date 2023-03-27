@@ -1,17 +1,22 @@
 <p align="center">
+  <img src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" height="150"/>
+</p>
 
-  <img src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" height="150">
-
-  <br/>
-
+<span align="center">
+  
+  # Homebridge Hubspace
+  
   <a href="https://www.npmjs.com/homebridge-hubspace">
     <img src="https://img.shields.io/npm/v/homebridge-hubspace.svg?logo=npm&logoColor=fff&label=NPM+package&color=limegreen" alt="Hubspace for Homebridge on npm" />
   </a>
+  
+  <a href="https://github.com/homebridge/homebridge/wiki/Verified-Plugins">
+    <img title="Verified by Homebridge" src="https://badgen.net/badge/homebridge/verified/purple"/>
+  </a>
+  
+</span>
 
-</p>
-
-
-# Homebridge Hubspace plugin
+# About plugin
 Hubspace is a platform for range of devices sold at HomeDepot. This plugin tries to integrate as many of these devices so that you can control them from HomeKit.
 
 # Disclaimer
