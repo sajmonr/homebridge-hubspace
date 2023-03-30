@@ -1,5 +1,3 @@
-import { ColorConverter } from 'color-convert';
-
 /**
  * Checks whether at least one value is null or undefined
  * @param values Values to check
@@ -147,7 +145,7 @@ export function rgbToMired(rgb: [number, number, number]): number {
     // Calculate the chromaticity coordinates
     const x = 0.4124 * rNorm + 0.3576 * gNorm + 0.1805 * bNorm;
     const y = 0.2126 * rNorm + 0.7152 * gNorm + 0.0722 * bNorm;
-    const z = 0.0193 * rNorm + 0.1192 * gNorm + 0.9505 * bNorm;
+    // const z = 0.0193 * rNorm + 0.1192 * gNorm + 0.9505 * bNorm;
 
     // Calculate the color temperature using the McCamy formula
     const n = (x - 0.332) / (0.1858 - y);
