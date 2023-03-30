@@ -37,6 +37,29 @@ There is no official documentation for Hubspace products. Under the hood they us
 
 If you find that a product does not work as intended, or you want to request a new product, please create a ticket for it in the issues section. You are always more than welcome to create a PR with any fixes or additions to the plugin.
 
+## Guidelines
+
+Any code you submit must be readable, be properly commented where necessary, and follow some common sense code quality.
+
+This is a TypeScript project, therefore, TypeScript naming conventions must be followed, unless otherwise specified. Some basic naming conventions are below.
+
+1. Use PascalCase for type names.
+1. Do not use I as a prefix for interface names.
+1. Use PascalCase for enum values.
+1. Use camelCase for function names.
+1. Use camelCase for property names and local variables.
+1. Use _ as a prefix for private fields.
+1. Use whole words in names when possible. Only use abbreviations where their use is common and obvious.
+
+Any ESLint issues need to be resolved before code can be merged. To check for production build linter issues you can run `npm run prepublishOnly`.
+
+## Adding new features
+To add new features to the do the following:
+1. Create an issue for the feature (unless there is an issue already)
+1. Assign the issue to yourself
+1. Create a new branch for the issue and name is as _{issue number}-{issue description}_ (e.g. 6-add-laser-support)
+1. Once ready issue a PR that is linked to the issue
+
 ## Development authentication
 Hubspace platform uses [Keycloak](https://www.keycloak.org) for authentication. To develop new features you will need to request JWT from Keycloak to authenticate your requests against the platform.
 
