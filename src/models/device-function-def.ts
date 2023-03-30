@@ -1,4 +1,3 @@
-import { DeviceFunction } from './device-functions';
 
 /**
  * Device function definition

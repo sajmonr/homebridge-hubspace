@@ -65,7 +65,7 @@ export class LightAccessory extends HubspaceAccessory{
 
     private async getOn(): Promise<CharacteristicValue>{
         // Try to get the value
-        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightPower);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.Power);
         const value = await this.deviceService.getValueAsBoolean(this.device.deviceId, func.values[0].deviceValues[0].key);
 
         // If the value is not defined then show 'Not Responding'
@@ -81,7 +81,7 @@ export class LightAccessory extends HubspaceAccessory{
 
     private async setOn(value: CharacteristicValue): Promise<void>{
         this.log.debug(`${this.device.name}: Received ${value} from Homekit Power`);
-        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.LightPower);
+        const func = getDeviceFunctionDef(this.device.functions, DeviceFunction.Power);
         await this.deviceService.setValue(this.device.deviceId, func.values[0].deviceValues[0].key, value);
     }
 

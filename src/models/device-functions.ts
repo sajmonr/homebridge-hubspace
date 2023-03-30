@@ -5,8 +5,9 @@ import { DeviceFunctionResponse } from '../responses/device-function-response';
  * Device functions types
  */
 export enum DeviceFunction{
-    LightPower = 'power',
+    Power = 'power',
     Brightness = 'brightness',
+    FanLightPower = 'light-power',
     FanPower = 'fan-power',
     FanSpeed = 'fan-speed',
     OutletPower = 'power',
@@ -21,7 +22,11 @@ export enum DeviceFunction{
  */
 export const DeviceFunctions: DeviceFunctionDef[] = [
     {
-        functionClass: DeviceFunction.LightPower,
+        functionClass: DeviceFunction.Power,
+        functionInstanceName: DeviceFunction.FanLightPower
+    },
+    {
+        functionClass: DeviceFunction.Power,
         functionInstanceName: DeviceFunction.FanPower
     },
     {
@@ -29,7 +34,7 @@ export const DeviceFunctions: DeviceFunctionDef[] = [
         functionInstanceName: DeviceFunction.FanSpeed
     },
     {
-        functionClass: DeviceFunction.LightPower
+        functionClass: DeviceFunction.Power
     },
     {
         functionClass: DeviceFunction.Brightness
