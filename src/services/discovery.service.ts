@@ -8,8 +8,10 @@ import { getDeviceTypeForKey } from '../models/device-type';
 import { Device } from '../models/device';
 import { createAccessoryForDevice } from '../accessories/device-accessory-factory';
 import { AxiosError } from 'axios';
-import { DeviceFunction, DeviceFunctions } from '../models/device-functions';
 import { DeviceFunctionResponse } from '../responses/device-function-response';
+import { DeviceDef, DeviceFunctionDef } from '../models/device-def';
+import { Devices } from '../hubspace-devices';
+import { DeviceFunction } from '../models/device-function';
 
 /**
  * Service for discovering and managing devices
@@ -94,50 +96,105 @@ export class DiscoveryService{
 
     private async getDevicesForAccount(): Promise<Device[]>{
         try{
-            const response =
-                await this._httpClient.get<DeviceResponse[]>(`accounts/${this._platform.accountService.accountId}/metadevices`);
+            const response = await this._httpClient
+                .get<DeviceResponse[]>(`accounts/${this._platform.accountService.accountId}/metadevices`);
+
             // Get only leaf devices with type of 'device'
             return response.data
                 .filter(d => d.children.length === 0 && d.typeId === 'metadevice.device')
                 .map(this.mapDeviceResponseToModel.bind(this))
-                .filter(d => d !== undefined) as Device[];
+                .filter(d => d.length > 0)
+                .flat();
         }catch(ex){
             this._platform.log.error('Failed to get devices for account.', (<AxiosError>ex).message);
             return [];
         }
     }
 
-    private mapDeviceResponseToModel(response: DeviceResponse): Device | undefined{
+    private mapDeviceResponseToModel(response: DeviceResponse): Device[]{
         const type = getDeviceTypeForKey(response.description.device.deviceClass);
+        const deviceDef = Devices.find(d => d.deviceType === type);
 
-        if(!type) return undefined;
+        if(!deviceDef) return [];
 
-        return {
-            uuid: this._platform.api.hap.uuid.generate(response.id),
-            deviceId: response.deviceId,
-            name: response.friendlyName,
-            type: type,
-            manufacturer: response.description.device.manufacturerName,
-            model: response.description.device.model.split(',').map(m => m.trim()),
-            functions: this.getFunctionsFromResponse(response.description.functions)
-        };
-    }
+        const supportedFunctions = this.findSupportedFunctionsForDevice(deviceDef, response.description.functions);
+        const devices: Device[] = [];
 
-    private getFunctionsFromResponse(supportedFunctions: DeviceFunctionResponse[]): DeviceFunction[]{
-        const output: DeviceFunction[] = [];
+        for(const supportedFc of supportedFunctions){
+            // Try to find a device that does NOT contain the same characteristic
+            const exisingDevice = devices.find(d => !d.functions.some(df => df.characteristic === supportedFc.characteristic));
 
-        for(const fc of supportedFunctions){
-            // Get the type for the function
-            const type = DeviceFunctions
-                .find(df => df.functionInstanceName === fc.functionInstance && df.functionClass === fc.functionClass)
-                ?.type;
+            // If the device already exists then just add the function to it
+            if(exisingDevice){
+                exisingDevice.functions.push(supportedFc);
+            }else{
+                // Otherwise create a new device for it
+                const defaultName = response.friendlyName;
+                const nameQualifier = supportedFc.functionInstance ?? devices.length;
+                const newName = devices.some(d => d.name === defaultName) ? `${defaultName} (${nameQualifier})` : defaultName;
 
-            if(type === undefined || output.indexOf(type) >= 0) continue;
+                // Make sure UUID is generated as many times as there are 'virtual' devices for each device
+                // because they all have the same device ID
+                devices.push({
+                    uuid: this.generatedUuid(response.id, devices.length + 1),
+                    deviceId: response.deviceId,
+                    name: newName,
+                    type: type,
+                    manufacturer: response.description.device.manufacturerName,
+                    model: response.description.device.model.split(',').map(m => m.trim()),
+                    functions: [ supportedFc ]
+                });
 
-            output.push(type);
+            }
+
         }
 
-        return output;
+        return devices;
+    }
+
+    /**
+     * Gets all functions that are supported (have been implemented) by the plugin
+     * @param deviceDef Homebridge device definition
+     * @param deviceFunctionResponse Hubspace device server response
+     * @returns All functions from the response that are supported by the Homebridge device
+     */
+    private findSupportedFunctionsForDevice(deviceDef: DeviceDef, deviceFunctionResponse: DeviceFunctionResponse[]): DeviceFunction[]{
+        const supportedFunctions: DeviceFunction[] = [];
+
+        for(const fc of deviceDef.functions){
+            const deviceFunctions = deviceFunctionResponse.filter(df => df.functionClass === fc.functionClass);
+
+            if(deviceFunctions.length === 0) continue;
+
+            for(const deviceFc of deviceFunctions){
+                const functionModel = this.mapToFunction(fc, deviceFc);
+                supportedFunctions.push(functionModel);
+            }
+        }
+
+        return supportedFunctions;
+    }
+
+    /**
+     * Generates UUID from a seed value
+     * @param value Value to use for UUID seed
+     * @param generations How many times to run the generation algorithm
+     * @returns UUID
+     */
+    private generatedUuid(value: string, generations = 1): string{
+        for(let i = 0; i < generations; i++){
+            value = this._platform.api.hap.uuid.generate(value);
+        }
+
+        return value;
+    }
+
+    private mapToFunction(functionDef: DeviceFunctionDef, functionResponse: DeviceFunctionResponse): DeviceFunction{
+        return {
+            characteristic: functionDef.characteristic,
+            functionInstance: functionResponse.functionInstance,
+            attributeId: functionResponse.values[0].deviceValues[0].key
+        };
     }
 
 }

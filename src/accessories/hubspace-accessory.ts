@@ -1,8 +1,9 @@
 import { Logger, PlatformAccessory, Service, WithUUID } from 'homebridge';
 import { Device } from '../models/device';
-import { DeviceFunction } from '../models/device-functions';
 import { HubspacePlatform } from '../platform';
 import { DeviceService } from '../services/device.service';
+import { FunctionCharacteristic } from '../models/function-characteristic';
+import { DeviceFunction, NoDeviceFunction } from '../models/device-function';
 
 /**
  * Base class for Hubspace accessories
@@ -54,12 +55,35 @@ export abstract class HubspaceAccessory{
     }
 
     /**
+     * Tries to get a device function for characteristic
+     * @param characteristic Characteristic for function
+     * @returns Found device function or {@link NoDeviceFunction}
+     */
+    protected getFunctionForCharacteristics(characteristic: FunctionCharacteristic): DeviceFunction{
+        const fc = this.device.functions.find(f => f.characteristic === characteristic);
+
+        if(!fc){
+            this.platform.log.error(`Failed get function for ${characteristic} it was not defined for device ${this.device.deviceId}.`);
+            return NoDeviceFunction;
+        }
+
+        return fc;
+    }
+
+    /**
      * Checks whether function is supported by device
-     * @param deviceFunction Function to check
+     * @param characteristic Function to check
      * @returns True if function is supported by the device otherwise false
      */
-    protected supportsFunction(deviceFunction: DeviceFunction): boolean{
-        return this.device.functions.some(fc => fc === deviceFunction);
+    protected supportsCharacteristic(characteristic: FunctionCharacteristic): boolean{
+        return this.device.functions.some(fc => fc.characteristic === characteristic);
+    }
+
+    /**
+     * throws {@link SERVICE_COMMUNICATION_FAILURE} exception
+     */
+    protected setNotResponding(): never{
+        throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
     }
 
 }

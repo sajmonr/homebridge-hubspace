@@ -1,4 +1,4 @@
-import { DeviceFunction } from './device-functions';
+import { DeviceFunction } from './device-function';
 import { DeviceType } from './device-type';
 
 /**

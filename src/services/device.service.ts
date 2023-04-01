@@ -6,7 +6,7 @@ import { DeviceStatusResponse } from '../responses/device-status-response';
 import { CharacteristicValue } from 'homebridge';
 import { convertNumberToHex } from '../utils';
 import { isAferoError } from '../responses/afero-error-response';
-import { DeviceFunction, getDeviceFunctionDef } from '../models/device-functions';
+import { DeviceFunction, isNoFunction } from '../models/device-function';
 
 /**
  * Service for interacting with devices
@@ -27,13 +27,16 @@ export class DeviceService{
      * @param value Value to set to attribute
      */
     async setValue(deviceId: string, deviceFunction: DeviceFunction, value: CharacteristicValue): Promise<void>{
-        const functionDef = getDeviceFunctionDef(deviceFunction);
         let response: AxiosResponse;
+
+        if(isNoFunction(deviceFunction)){
+            throw new this._platform.api.hap.HapStatusError(this._platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        }
 
         try{
             response = await this._httpClient.post(`accounts/${this._platform.accountService.accountId}/devices/${deviceId}/actions`, {
                 type: 'attribute_write',
-                attrId: functionDef.attributeId,
+                attrId: deviceFunction.attributeId,
                 data: this.getDataValue(value)
             });
         }catch(ex){
@@ -54,8 +57,11 @@ export class DeviceService{
      * @returns Data value
      */
     async getValue(deviceId: string, deviceFunction: DeviceFunction): Promise<CharacteristicValue | undefined>{
-        const functionDef = getDeviceFunctionDef(deviceFunction);
         let deviceStatus: DeviceStatusResponse;
+
+        if(isNoFunction(deviceFunction)){
+            throw new this._platform.api.hap.HapStatusError(this._platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+        }
 
         try{
             const response =
@@ -68,10 +74,10 @@ export class DeviceService{
             return undefined;
         }
 
-        const attributeResponse = deviceStatus.attributes.find(a => a.id === functionDef.attributeId);
+        const attributeResponse = deviceStatus.attributes.find(a => a.id.toString() === deviceFunction.attributeId);
 
         if(!attributeResponse){
-            this._platform.log.error(`Failed to find value for ${functionDef.functionInstanceName} for device (device ID: ${deviceId})`);
+            this._platform.log.error(`Failed to find value for ${deviceFunction.characteristic} for device (device ID: ${deviceId})`);
             return undefined;
         }
 
