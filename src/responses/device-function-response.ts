@@ -6,4 +6,9 @@ export interface DeviceFunctionResponse{
     functionClass: string;
     /** Instance name of the function */
     functionInstance: string;
+    values: {
+        deviceValues: {
+            key: string;
+        }[];
+    }[];
 }

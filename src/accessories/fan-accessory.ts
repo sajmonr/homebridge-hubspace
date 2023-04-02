@@ -2,7 +2,7 @@ import { CharacteristicValue, PlatformAccessory } from 'homebridge';
 import { HubspacePlatform } from '../platform';
 import { HubspaceAccessory } from './hubspace-accessory';
 import { isNullOrUndefined } from '../utils';
-import { DeviceFunction } from '../models/device-functions';
+import { FunctionCharacteristic } from '../models/function-characteristic';
 
 /**
  * Fan accessory for Hubspace platform
@@ -39,16 +39,20 @@ export class FanAccessory extends HubspaceAccessory{
     }
 
     private async setActive(value: CharacteristicValue): Promise<void>{
-        this.deviceService.setValue(this.device.deviceId, DeviceFunction.FanPower, value);
+        const deviceFc = this.getFunctionForCharacteristics(FunctionCharacteristic.Power);
+
+        this.deviceService.setValue(this.device.deviceId, deviceFc, value);
     }
 
     private async getActive(): Promise<CharacteristicValue>{
+        const deviceFc = this.getFunctionForCharacteristics(FunctionCharacteristic.Power);
+
         // Try to get the value
-        const value = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.FanPower);
+        const value = await this.deviceService.getValue(this.device.deviceId, deviceFc);
 
         // If the value is not defined then show 'Not Responding'
         if(isNullOrUndefined(value)){
-            throw new this.platform.api.hap.HapStatusError(this.platform.api.hap.HAPStatus.SERVICE_COMMUNICATION_FAILURE);
+            this.setNotResponding();
         }
 
         // Otherwise return the value
@@ -56,8 +60,10 @@ export class FanAccessory extends HubspaceAccessory{
     }
 
     private async getRotationSpeed(): Promise<CharacteristicValue>{
+        const deviceFc = this.getFunctionForCharacteristics(FunctionCharacteristic.FanSpeed);
+
         // Try to get the value
-        const value = await this.deviceService.getValue(this.device.deviceId, DeviceFunction.FanSpeed);
+        const value = await this.deviceService.getValue(this.device.deviceId, deviceFc);
 
         // If the value is not defined then show 'Not Responding'
         if(isNullOrUndefined(value)){
@@ -69,7 +75,9 @@ export class FanAccessory extends HubspaceAccessory{
     }
 
     private async setRotationSpeed(value: CharacteristicValue): Promise<void>{
-        await this.deviceService.setValue(this.device.deviceId, DeviceFunction.FanSpeed, value);
+        const deviceFc = this.getFunctionForCharacteristics(FunctionCharacteristic.FanSpeed);
+
+        await this.deviceService.setValue(this.device.deviceId, deviceFc, value);
     }
 
 }

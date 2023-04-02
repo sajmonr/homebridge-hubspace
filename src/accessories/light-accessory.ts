@@ -2,7 +2,7 @@ import { CharacteristicValue, PlatformAccessory } from 'homebridge';
 import { HubspacePlatform } from '../platform';
 import { HubspaceAccessory } from './hubspace-accessory';
 import { isNullOrUndefined } from '../utils';
-import { DeviceFunction } from '../models/device-functions';
+import { FunctionCharacteristic } from '../models/function-characteristic';
 
 /**
  * Light accessory for Hubspace platform
@@ -28,7 +28,7 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private configureBrightness(): void{
-        if(!this.supportsFunction(DeviceFunction.Brightness)) return;
+        if(!this.supportsCharacteristic(FunctionCharacteristic.Brightness)) return;
 
         this.service.getCharacteristic(this.platform.Characteristic.Brightness)
             .onGet(this.getBrightness.bind(this))
@@ -36,8 +36,9 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async getOn(): Promise<CharacteristicValue>{
+        const deviceFc = this.getFunctionForCharacteristics(FunctionCharacteristic.Power);
         // Try to get the value
-        const value = await this.deviceService.getValueAsBoolean(this.device.deviceId, DeviceFunction.LightPower);
+        const value = await this.deviceService.getValueAsBoolean(this.device.deviceId, deviceFc);
 
         // If the value is not defined then show 'Not Responding'
         if(isNullOrUndefined(value)){
@@ -49,12 +50,15 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async setOn(value: CharacteristicValue): Promise<void>{
-        await this.deviceService.setValue(this.device.deviceId, DeviceFunction.LightPower, value);
+        const deviceFc = this.getFunctionForCharacteristics(FunctionCharacteristic.Power);
+
+        await this.deviceService.setValue(this.device.deviceId, deviceFc, value);
     }
 
     private async getBrightness(): Promise<CharacteristicValue>{
+        const deviceFc = this.getFunctionForCharacteristics(FunctionCharacteristic.Brightness);
         // Try to get the value
-        const value = await this.deviceService.getValueAsInteger(this.device.deviceId, DeviceFunction.Brightness);
+        const value = await this.deviceService.getValueAsInteger(this.device.deviceId, deviceFc);
 
         // If the value is not defined then show 'Not Responding'
         if(isNullOrUndefined(value) || value === -1){
@@ -66,7 +70,9 @@ export class LightAccessory extends HubspaceAccessory{
     }
 
     private async setBrightness(value: CharacteristicValue): Promise<void>{
-        this.deviceService.setValue(this.device.deviceId, DeviceFunction.Brightness, value);
+        const deviceFc = this.getFunctionForCharacteristics(FunctionCharacteristic.Brightness);
+
+        this.deviceService.setValue(this.device.deviceId, deviceFc, value);
     }
 
 }
