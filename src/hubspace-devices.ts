@@ -31,6 +31,10 @@ export const Devices: DeviceDef[] = [
             {
                 functionClass: 'brightness',
                 characteristic: FunctionCharacteristic.Brightness
+            },
+            {
+                functionClass: 'color-rgb',
+                characteristic: FunctionCharacteristic.ColorRgb
             }
         ]
     },
