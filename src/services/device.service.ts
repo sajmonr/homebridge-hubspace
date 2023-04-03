@@ -114,6 +114,12 @@ export class DeviceService{
         return Number.isNaN(numberValue) ? undefined : numberValue;
     }
 
+    async getValueAsString(deviceId: string, deviceFunction: DeviceFunction): Promise<string>{
+        const value = await this.getValue(deviceId, deviceFunction);
+
+        return !value || typeof value !== 'string' ? '' : value;
+    }
+
     private getDataValue(value: CharacteristicValue): string{
 
         if(typeof value === 'boolean'){
@@ -122,6 +128,10 @@ export class DeviceService{
 
         if(typeof value === 'number'){
             return convertNumberToHex(value);
+        }
+
+        if(typeof value === 'string'){
+            return value;
         }
 
         throw new Error('The value type is not supported.');
