@@ -4,8 +4,18 @@ import { FunctionCharacteristic } from './function-characteristic';
  * Device function
  */
 export interface DeviceFunction{
+    /**
+     * Homebridge characteristic for the function
+     */
     characteristic: FunctionCharacteristic;
+    /**
+     * Function instance
+     * (this could be set by the API if there are multiple instance for single characteristic)
+     */
     functionInstance?: string;
+    /**
+     * API attribute ID
+     */
     attributeId: string;
 }
 
