@@ -20,6 +20,6 @@ jobs:
       - name: Build plugin
         run: npm run build
       - name: Publish plugin
-        run: npm publish
+        run: npm publish --tag ${{ github.events.release.prerelease && 'preview' || 'latest' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
