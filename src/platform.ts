@@ -15,8 +15,7 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
     public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
     public readonly accountService!: AccountService;
     public readonly deviceService!: DeviceService;
-
-    private readonly _discoveryService!: DiscoveryService;
+    public readonly discoveryService!: DiscoveryService;
     private _isInitialized = false;
 
     constructor(
@@ -31,13 +30,13 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
         // Init token service as singleton
         TokenService.init(this.config.username, this.config.password);
         // Configure private services
-        this._discoveryService = new DiscoveryService(this);
+        this.discoveryService = new DiscoveryService(this);
         // Configure global services
         this.accountService = new AccountService(log);
         this.deviceService = new DeviceService(this);
 
         // Configure callbacks
-        this.accountService.onAccountLoaded(this._discoveryService.discoverDevices.bind(this._discoveryService));
+        this.accountService.onAccountLoaded(this.discoveryService.discoverDevices.bind(this.discoveryService));
         this.api.on('didFinishLaunching', async () => this.accountService.loadAccount());
 
         // Mark platform as initialized
@@ -52,6 +51,6 @@ export class HubspacePlatform implements DynamicPlatformPlugin {
         // Do not restore cached accessories if there was an error during initialization
         if(!this._isInitialized) return;
 
-        this._discoveryService.configureCachedAccessory(accessory);
+        this.discoveryService.configureCachedAccessory(accessory);
     }
 }

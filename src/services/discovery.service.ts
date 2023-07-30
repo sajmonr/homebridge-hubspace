@@ -12,6 +12,7 @@ import { DeviceFunctionResponse } from '../responses/device-function-response';
 import { DeviceDef, DeviceFunctionDef } from '../models/device-def';
 import { Devices } from '../hubspace-devices';
 import { DeviceFunction } from '../models/device-function';
+import { log } from 'console';
 
 /**
  * Service for discovering and managing devices
@@ -40,7 +41,7 @@ export class DiscoveryService{
     /**
      * Discovers new devices
      */
-    async discoverDevices() {
+    async discoverDevices(): Promise<void> {
         const devices = await this.getDevicesForAccount();
 
         // loop over the discovered devices and register each one if it has not already been registered
@@ -94,11 +95,10 @@ export class DiscoveryService{
         this._platform.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
     }
 
-    private async getDevicesForAccount(): Promise<Device[]>{
+    async getDevicesForAccount(): Promise<Device[]>{
         try{
             const response = await this._httpClient
                 .get<DeviceResponse[]>(`accounts/${this._platform.accountService.accountId}/metadevices`);
-
             // Get only leaf devices with type of 'device'
             return response.data
                 .filter(d => d.children.length === 0 && d.typeId === 'metadevice.device')
