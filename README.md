@@ -1,17 +1,13 @@
 <p align="center">
-  <img src="https://github.com/homebridge/branding/raw/master/logos/homebridge-wordmark-logo-vertical.png" height="150"/>
+  <img src="https://developers.homebridge.io/assets/images/homebridge-color-round.svg" height="150"/>
 </p>
 
 <span align="center">
   
-  # Homebridge Hubspace
+  # Homebridge Home Depot Hubspace
   
-  <a href="https://www.npmjs.com/homebridge-hubspace">
-    <img src="https://img.shields.io/npm/v/homebridge-hubspace.svg?logo=npm&logoColor=fff&label=NPM+package&color=limegreen" alt="Hubspace for Homebridge on npm" />
-  </a>
-  
-  <a href="https://github.com/homebridge/homebridge/wiki/Verified-Plugins">
-    <img title="Verified by Homebridge" src="https://badgen.net/badge/homebridge/verified/purple"/>
+  <a href="https://www.npmjs.com/homebridge-home-depot-hubspace">
+    <img src="https://img.shields.io/npm/v/homebridge-hubspace.svg?logo=npm&logoColor=fff&label=NPM+package&color=limegreen" alt="Hubspace for Home Depot Homebridge on npm" />
   </a>
   
 </span>
@@ -20,7 +16,8 @@
 Hubspace is a platform for range of devices sold at HomeDepot. This plugin tries to integrate as many of these devices so that you can control them from HomeKit.
 
 # Disclaimer
-I do not own any rights to Hubspace. Any work published here is solely for my own convenience. I am not making any guarantees about the code or products referenced here.
+I do not own any rights to Hubspace. Any work published here is solely for my own convenience. I am not making any guarantees about the code or products referenced here.  This was forked by the
+work done by sajmonr.  Original repo can be found <a href="https://github.com/sajmonr/homebridge-hubspace#readme" target="_blank">here</a>
 
 # Tested products
 Below you can find a table of products that have been tested with this plugin. Some products share similarities among one another (e.g. lights), however, that does not guarantee that they will all work.
@@ -31,6 +28,7 @@ Not all features for all products are implemented. Please see the functions belo
 | --- | --- |
 | [Universal Smart Wi-Fi 4-Speed Ceiling Fan](https://www.homedepot.com/p/Hampton-Bay-Universal-Smart-Wi-Fi-4-Speed-Ceiling-Fan-White-Remote-Control-For-Use-Only-With-AC-Motor-Fans-Powered-by-Hubspace-76278/315169181?) | <ul><li>Light on/off</li><li>Fan on/off</li><li>Light brightness</li><li>Fan speed</li></ul> |
 | [Defiant Smart Plug](https://www.homedepot.com/p/Defiant-15-Amp-120-Volt-Smart-Wi-Fi-Bluetooth-Plug-with-1-Outlet-Powered-by-Hubspace-HPPA11AWB/315636834) | <ul><li>Power on/off</li></ul> |
+| [Commercial Electric Single Pole Switch](https://www.homedepot.com/p/Commercial-Electric-15-Amp-Single-Pole-White-Smart-Light-Switch-with-Wi-Fi-and-Bluetooth-Technology-Powered-by-Hubspace-1-Pack-HPSA11CWB/320313682) | <ul><li>Power on/off</li></ul> |
 
 # Development
 There is no official documentation for Hubspace products. Under the hood they use Afero cloud as the mechanism that controls the products. Any functionality here is gained by experimenting with various functions of the devices. Afero provides simple explanation of [their APIs](https://developer.afero.io/API-DeviceEndpoints), however, this is in no way comprehensive.

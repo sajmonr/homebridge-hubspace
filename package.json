@@ -1,17 +1,17 @@
 {
-  "displayName": "Homebridge Hubspace",
-  "name": "homebridge-hubspace",
-  "version": "2.0.0-preview3",
-  "description": "Homebridge plugin for controlling Hubspace accessories.",
-  "homepage": "https://github.com/sajmonr/homebridge-hubspace#readme",
-  "author": "Adam Simonicek",
+  "displayName": "Homebridge Hubspace by Home Depot",
+  "name": "homebridge-home-depot-hubspace",
+  "version": "1.0.0",
+  "description": "Homebridge plugin for controlling Home Depot Hubspace accessories.",
+  "homepage": "https://github.com/fiestachickens/homebridge-home-depot-hubspace#readme",
+  "author": "Adam Simonicek - Forked by Cyrus Keck",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/sajmonr/homebridge-hubspace.git"
+    "url": "https://github.com/fiestachickens/homebridge-home-depot-hubspace.git"
   },
   "bugs": {
-    "url": "https://github.com/sajmonr/homebridge-hubspace/issues"
+    "url": "https://github.com/fiestachickens/homebridge-home-depot-hubspace/issues"
   },
   "engines": {
     "node": ">=14.18.1",
